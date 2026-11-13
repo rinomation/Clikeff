@@ -21,7 +21,7 @@
       master = ctx.createGain();
       master.gain.value = muted ? 0 : 1;
       master.connect(comp); comp.connect(ctx.destination);
-      musicBus = ctx.createGain(); musicBus.gain.value = 0.55; musicBus.connect(master);
+      musicBus = ctx.createGain(); musicBus.gain.value = 0.4; musicBus.connect(master);
       sfxBus = ctx.createGain(); sfxBus.gain.value = 1; sfxBus.connect(master);
       reverb = ctx.createConvolver(); reverb.buffer = impulse(5.5, 2.6);
       const rv = ctx.createGain(); rv.gain.value = 0.9; reverb.connect(rv); rv.connect(master);
@@ -108,75 +108,123 @@
       tone(t, out, { note: n, type: 'sawtooth', len, vol: (vol || 0.05), cutoff: 1100, a: 0.25, sus: 0.8, detune: dt })));
   }
 
-  /* ---------- רצועות ----------
-     כל רצועה: bpm, תבניות של 16 צעדים לתיבה, ומהלך אקורדים של 4 תיבות. */
-  const X = 'x', _ = '.';
+  /* ---------- כלים רכים למנגינות ---------- */
+  function marimba(t, out, note, vol) {
+    const f = mtof(note);
+    [[1, 1, 0.45], [4, 0.25, 0.12], [10, 0.06, 0.05]].forEach(([mul, amp, dec]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f * mul;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(vol * amp, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t + dec + 0.05);
+    });
+  }
+  function pluck(t, out, note, vol, bright) {
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = mtof(note);
+    f.type = 'lowpass'; f.frequency.setValueAtTime(bright || 2600, t); f.frequency.exponentialRampToValueAtTime(500, t + 0.3);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+    o.connect(f); f.connect(g); g.connect(out); o.start(t); o.stop(t + 0.45);
+  }
+  function reed(t, out, note, vol, len) {
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    o.type = 'square'; o.frequency.value = mtof(note);
+    lfo.frequency.value = 5.5; lg.gain.value = 6; lfo.connect(lg); lg.connect(o.detune); /* ויברטו עדין */
+    f.type = 'lowpass'; f.frequency.value = 1500; f.Q.value = 0.7;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.03);
+    g.gain.setTargetAtTime(0.0001, t + len * 0.8, 0.05);
+    o.connect(f); f.connect(g); g.connect(out); o.start(t); lfo.start(t); o.stop(t + len + 0.3); lfo.stop(t + len + 0.3);
+  }
+  function softBass(t, out, note, len, vol) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = mtof(note);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol || 0.22, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.05);
+  }
+  function softPad(t, out, notes, len, vol) {
+    notes.forEach((n) => [-6, 6].forEach((dt) => {
+      const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = mtof(n); o.detune.value = dt;
+      f.type = 'lowpass'; f.frequency.value = 900;
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + len * 0.3);
+      g.gain.linearRampToValueAtTime(0.0001, t + len);
+      o.connect(f); f.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.05);
+    }));
+  }
+
+  /* ---------- מנגינות ----------
+     רשת של שמיניות: 8 צעדים לתיבה, 4 תיבות. melody: הפרש בחצאי טונים מ-key, null = שקט.
+     chords: 4 אקורדים (הפרשים מ-key). drums: k=קיק רך, c=מחיאה, s=שייקר. */
+  const _ = null;
   const TRACKS = {
-    drama: { /* מתח דרמטי ~150 */
-      bpm: 150, root: 45, prog: [0, 0, -4, -2], scale: [0, 3, 7, 10],
-      kick: 'x...x...x...x...', snare: '....x.......x..x', hat: 'x.x.x.x.x.x.x.x.',
-      bass: 'x.xx.xx.x.xx.xx.', arp: 'xxxxxxxxxxxxxxxx', arpOct: 24, arpType: 'square', arpVol: 0.05,
-      stab: 'x.......x.......', padVol: 0.035
+    fun: { /* שמח וקופצני */
+      bpm: 116, key: 72, lead: 'marimba', vol: 0.16,
+      chords: [[0, 4, 7], [-5, -1, 2], [-3, 0, 4], [-7, -3, 0]],
+      melody: [0, 4, 7, 4, 9, 7, 4, _, 2, 7, 11, 7, 9, 7, 2, _, 0, 4, 9, 4, 12, 9, 4, _, 5, 9, 12, 9, 7, 5, 4, 2],
+      drums: { k: 'x...x...', c: '..x...x.', s: '.x.x.x.x' }
     },
-    chase: { /* מרדף ~172 */
-      bpm: 172, root: 43, prog: [0, 3, -2, 1], scale: [0, 7, 12, 3],
-      kick: 'x..x..x.x..x..x.', snare: '....x.......x...', hat: 'xxxxxxxxxxxxxxxx',
-      bass: 'xxxxxxxxxxxxxxxx', arp: 'x.x.x.x.x.x.x.x.', arpOct: 24, arpType: 'sawtooth', arpVol: 0.045,
-      stab: '', padVol: 0.03
+    drama: { /* מתח קליל */
+      bpm: 100, key: 69, lead: 'pluck', vol: 0.15,
+      chords: [[0, 3, 7], [-4, 0, 3], [-2, 2, 5], [-5, -1, 2]],
+      melody: [0, _, 3, _, 7, _, 3, _, 8, _, 12, _, 8, _, 3, _, 10, _, 14, _, 10, _, 7, _, 7, _, 11, _, 14, _, 11, _],
+      drums: { k: 'x.......', s: 'xxxxxxxx' }
     },
-    mystery: { /* מסתורין ~104 */
-      bpm: 104, root: 41, prog: [0, 1, 0, -1], scale: [0, 3, 6, 10],
-      kick: 'x.........x.....', snare: '........x.......', hat: '..x...x...x...x.',
-      bass: 'x.....x...x.....', arp: 'x..x..x..x..x...', arpOct: 36, arpType: 'triangle', arpVol: 0.07,
-      stab: '', padVol: 0.05, tick: true
+    chase: { /* חגיגה — סגנון פריילעך */
+      bpm: 126, key: 62, lead: 'reed', vol: 0.06,
+      chords: [[0, 4, 7], [5, 8, 12], [0, 4, 7], [-2, 2, 5]],
+      melody: [0, 1, 4, 5, 7, _, 5, 4, 5, 7, 8, 7, 5, 4, 1, 0, 0, 1, 4, 5, 7, 8, 10, 8, 7, 5, 4, 1, 0, _, 0, _],
+      drums: { k: 'x...x...', c: '..x...x.' }, oompah: true
     },
-    fun: { /* כייפי קליקר ~126 */
-      bpm: 126, root: 48, prog: [0, 5, -3, 7], scale: [0, 4, 7, 12], major: true,
-      kick: 'x...x...x...x...', snare: '....x.......x...', hat: '..x...x...x...x.',
-      bass: 'x..x..x...x..x..', arp: 'x.xx.x.xx.x.x.xx', arpOct: 24, arpType: 'square', arpVol: 0.05,
-      stab: '', padVol: 0.03, clap: true
+    mystery: { /* סקרנות */
+      bpm: 92, key: 64, lead: 'marimba', vol: 0.14,
+      chords: [[0, 3, 7], [-4, 0, 3], [-2, 2, 5], [-5, -1, 2]],
+      melody: [7, _, 12, _, 10, _, 7, _, 8, _, 12, _, 15, _, 12, _, 10, _, 14, _, 12, _, 10, _, 7, _, 11, _, 14, _, _, _],
+      drums: { s: '..x...x.' }
     },
-    cinema: { /* קולנועי ~92 */
-      bpm: 92, root: 38, prog: [0, -4, -2, -5], scale: [0, 7, 12, 15],
-      kick: 'x.......x.x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.x.x.',
-      bass: 'x...............', arp: 'x...x...x...x...', arpOct: 24, arpType: 'sawtooth', arpVol: 0.04,
-      stab: 'x...............', padVol: 0.06, boom: true
+    cinema: { /* רגוע */
+      bpm: 84, key: 65, lead: 'marimba', vol: 0.13,
+      chords: [[0, 4, 7], [-3, 0, 4], [-7, -3, 0], [-5, -1, 2]],
+      melody: [12, _, 9, _, 7, _, 9, _, 9, _, 5, _, 2, _, 5, _, 5, _, 10, _, 14, _, 10, _, 14, _, 11, _, 7, _, _, _],
+      drums: {}
     }
   };
   S.TRACK_IDS = Object.keys(TRACKS);
 
-  /* ---------- נגן (sequencer עם תזמון מראש) ---------- */
+  /* ---------- נגן (תזמון מראש) ---------- */
   const music = { track: null, step: 0, next: 0, timer: null, playing: false };
 
   function scheduleStep(tr, step, t, out) {
-    const i = step % 16;
-    const bar = Math.floor(step / 16) % 4;
-    const chordRoot = tr.root + tr.prog[bar];
-    const on = (p) => p && p[i] === X;
-    if (on(tr.kick)) kick(t, out, 0.9);
-    if (on(tr.snare)) { snare(t, out, 0.8); if (tr.clap) noise(t + 0.01, out, { vol: 0.3, dur: 0.12, bp: 1200 }); }
-    if (on(tr.hat)) noise(t, out, { vol: i % 4 === 2 ? 0.14 : 0.08, dur: 0.04, hp: 7500 });
-    if (on(tr.bass)) tone(t, out, { note: chordRoot + (i % 8 === 6 && tr.bpm > 140 ? 12 : 0), type: 'sawtooth', len: 60 / tr.bpm / 4 * 0.9, vol: 0.2, cutoff: 650, q: 4 });
-    if (on(tr.arp)) {
-      const deg = tr.scale[(step) % tr.scale.length];
-      tone(t, out, { note: chordRoot + tr.arpOct + deg, type: tr.arpType, len: 60 / tr.bpm / 4 * 0.8, vol: tr.arpVol, cutoff: 3200, q: 2 });
+    const i = step % 8;
+    const bar = Math.floor(step / 8) % 4;
+    const beat = 60 / tr.bpm;
+    const ch = tr.chords[bar].map((x) => tr.key + x);
+    const on = (p) => p && p[i] === 'x';
+    const d = tr.drums || {};
+    if (on(d.k)) kick(t, out, 0.45);
+    if (on(d.c)) noise(t, out, { vol: 0.12, dur: 0.1, bp: 1400 });
+    if (on(d.s)) noise(t, out, { vol: i % 2 ? 0.035 : 0.02, dur: 0.04, hp: 7000 });
+
+    /* בס: על 1 ו-3; בפריילעך — אום-פה */
+    if (i === 0 || i === 4) softBass(t, out, ch[0] - 24 + (tr.oompah && i === 4 ? 7 : 0), beat * 1.6, 0.2);
+    if (tr.oompah && (i === 2 || i === 6)) ch.forEach((n) => pluck(t, out, n - 12, 0.035, 1400));
+    if (i === 0 && !tr.oompah) softPad(t, out, ch.map((n) => n - 12), beat * 4, 0.022);
+
+    const m = tr.melody[(step % 32)];
+    if (m != null) {
+      const note = tr.key + m;
+      if (tr.lead === 'marimba') marimba(t, out, note, tr.vol);
+      else if (tr.lead === 'pluck') pluck(t, out, note, tr.vol);
+      else reed(t, out, note, tr.vol, beat / 2 * 0.9);
     }
-    if (on(tr.stab)) {
-      const third = tr.major ? 4 : 3;
-      pad(t, out, [chordRoot + 12, chordRoot + 12 + third, chordRoot + 19], 60 / tr.bpm * 0.9, 0.05);
-    }
-    if (i === 0) {
-      const third = tr.major ? 4 : 3;
-      pad(t, out, [chordRoot + 12, chordRoot + 12 + third, chordRoot + 19, chordRoot + 24], 60 / tr.bpm * 4, tr.padVol);
-      if (tr.boom) { kick(t, out, 1); noise(t, out, { vol: 0.25, dur: 1.2, bp: 140 }); }
-    }
-    if (tr.tick && i % 4 === 0) tone(t, out, { note: 96, type: 'square', len: 0.02, vol: 0.05, cutoff: 9000 });
   }
 
   function pump() {
     if (!music.playing) return;
     const tr = TRACKS[music.track];
-    const stepDur = 60 / tr.bpm / 4;
+    const stepDur = 60 / tr.bpm / 2;
     while (music.next < ctx.currentTime + 0.15) {
       scheduleStep(tr, music.step, Math.max(music.next, ctx.currentTime), musicBus);
       music.step++;
@@ -193,7 +241,7 @@
     music.next = ctx.currentTime + 0.06;
     music.playing = true;
     musicBus.gain.cancelScheduledValues(ctx.currentTime);
-    musicBus.gain.setValueAtTime(0.55, ctx.currentTime);
+    musicBus.gain.setValueAtTime(0.4, ctx.currentTime);
     music.timer = setInterval(pump, 25);
     pump();
   };
@@ -205,7 +253,7 @@
     if (musicBus) {
       musicBus.gain.cancelScheduledValues(ctx.currentTime);
       musicBus.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
-      setTimeout(() => { if (!music.playing && musicBus) musicBus.gain.value = 0.55; }, 400);
+      setTimeout(() => { if (!music.playing && musicBus) musicBus.gain.value = 0.4; }, 400);
     }
   };
 
@@ -223,7 +271,7 @@
     music.playing = true;
     music.next = ctx.currentTime + 0.05;
     musicBus.gain.cancelScheduledValues(ctx.currentTime);
-    musicBus.gain.setTargetAtTime(0.55, ctx.currentTime, 0.08);
+    musicBus.gain.setTargetAtTime(0.4, ctx.currentTime, 0.08);
     music.timer = setInterval(pump, 25);
     pump();
   };

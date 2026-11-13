@@ -3,7 +3,7 @@
   'use strict';
   const M = A.Admin;
   const S = (A.AdminMain = {
-    cfg: { duration: 15, track: 'drama', showRank: false, source: 'builtin', mode: 'sync' },
+    cfg: { duration: 15, track: 'fun', showRank: false, source: 'builtin', mode: 'sync' },
     bank: null,        /* { title, items, updated } */
     preview: null,     /* תצוגה מקדימה לפני שמירה */
     code: null, room: null, players: [],
@@ -231,7 +231,12 @@
       code,
       room: () => S.room,
       players: () => rawPlayers(),
-      applyLocal: (patch) => { S.room = Object.assign({}, S.room, patch); if (patch.phase === 'end') H.results(); else draw(); },
+      applyLocal: (patch) => {
+        S.room = Object.assign({}, S.room, patch);
+        if (patch.phase === 'end') return H.results();
+        if (patch.status === 'active' && (S.view === 'lobby' || S.view === 'setup')) S.view = 'sync';
+        draw();
+      },
       onTick: stageTick
     });
   }

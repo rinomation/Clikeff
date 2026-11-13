@@ -7,11 +7,11 @@
   const V = (A.AdminView = {});
 
   V.TRACKS = [
-    { id: 'drama', name: 'מתח דרמטי', bpm: 150, img: 'fire' },
-    { id: 'chase', name: 'מרדף', bpm: 172, img: 'rocket' },
-    { id: 'mystery', name: 'מסתורין', bpm: 104, img: 'owl' },
-    { id: 'fun', name: 'כייפי קליקר', bpm: 126, img: 'party_popper' },
-    { id: 'cinema', name: 'קולנועי', bpm: 92, img: 'glowing_star' }
+    { id: 'fun', name: 'שמח וקופצני', desc: 'מרימבה עליזה', img: 'party_popper' },
+    { id: 'chase', name: 'חגיגה', desc: 'בסגנון פריילעך', img: 'balloon' },
+    { id: 'drama', name: 'מתח קליל', desc: 'פריטות מותחות', img: 'hourglass_not_done' },
+    { id: 'mystery', name: 'סקרנות', desc: 'צלצולים שקטים', img: 'owl' },
+    { id: 'cinema', name: 'רגוע', desc: 'נעים ושקט', img: 'rainbow' }
   ];
   V.track = (id) => V.TRACKS.find((t) => t.id === id) || V.TRACKS[0];
 
@@ -263,7 +263,7 @@
         '<label class="track' + (t.id === d.track ? ' is-selected' : '') + '">' +
         '<input type="radio" name="track" value="' + t.id + '"' + (t.id === d.track ? ' checked' : '') + '>' +
         '<img src="' + A.img(t.img) + '" alt="">' +
-        '<span class="t-meta"><b>' + t.name + '</b><span>' + t.bpm + ' BPM</span></span>' +
+        '<span class="t-meta"><b>' + t.name + '</b><span>' + t.desc + '</span></span>' +
         '<button type="button" class="play' + (d.playing === t.id ? ' is-playing' : '') + '" data-action="preview-track" data-value="' + t.id + '">' +
         A.icon(d.playing === t.id ? 'stop' : 'play') + (d.playing === t.id ? 'עצירה' : 'נגן דוגמה') + '</button></label>').join('') +
       '</div></fieldset>' +

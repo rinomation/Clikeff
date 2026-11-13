@@ -48,9 +48,9 @@ body.player { overscroll-behavior: none; }
 .input-code::placeholder { letter-spacing: .32em; }
 
 .name-wrap { position: relative; display: block; }
-.name-wrap .input { padding-inline-end: 3.6em; }
+.name-wrap .input { padding-left: 3.6em; }
 .char-count {
-  position: absolute; inset-inline-end: 14px; top: 50%; transform: translateY(-50%);
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
   font-size: .8rem; color: var(--text-mute); direction: ltr; pointer-events: none;
 }
 
