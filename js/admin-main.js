@@ -112,7 +112,7 @@
       if (!room || room.status === 'closed') { S.room = null; return backToSetup(); }
       /* תשובה ישנה שהגיעה אחרי שינוי שעשינו — מתעלמים */
       const Y = A.SyncHost;
-      if (Y.lastCommit && room.updatedAt && room.updatedAt.ms < Y.lastCommit - 5) return;
+      if (Y.lastCommit && room.updatedAt && room.updatedAt.ms < Y.lastCommit) return;
       const was = S.room;
       S.room = room;
       if (room.status === 'waiting') S.view = 'lobby';

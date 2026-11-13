@@ -51,8 +51,11 @@
       const t0 = Date.now();
       const res = await A.Net.updateRoom(ctx.code, patch);
       if (res && res.commitTime) {
-        Y.lastCommit = Date.parse(res.commitTime);
-        offset = Y.lastCommit - (t0 + Date.now()) / 2;
+        offset = Date.parse(res.commitTime) - (t0 + Date.now()) / 2;
+        /* הזמן המדויק שנשמר בשדה updatedAt — כדי לזהות תשובות ישנות */
+        const tr = ((res.writeResults || [])[0] || {}).transformResults || [];
+        const ts = tr.find((v) => v && v.timestampValue);
+        Y.lastCommit = ts ? Date.parse(ts.timestampValue) : Date.parse(res.commitTime) - 1000;
       }
       phaseAt = Date.now();
       const clean = Object.assign({}, patch);
