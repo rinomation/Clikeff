@@ -1,0 +1,6 @@
+# קבצים פרטיים שלא עולים לאינטרנט
+*.xlsx
+*.xls
+node_modules/
+.DS_Store
+Thumbs.db
