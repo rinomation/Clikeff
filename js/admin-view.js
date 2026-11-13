@@ -166,7 +166,8 @@
       '<section class="admin-main"><div class="lobby">' +
       '<div class="card join-panel">' +
       '<h2 class="jp-title">הצטרפו עכשיו!</h2>' +
-      '<span class="jp-url"><span>' + esc(url.replace(/^https?:\/\//, '')) + '</span>' +
+      '<p class="field-hint" style="margin-bottom:6px">נכנסים בטלפון לכתובת:</p>' +
+      '<span class="jp-url"><span>' + esc(A.joinUrl('').replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</span>' +
       '<button type="button" data-action="copy-link" aria-label="העתקת קישור">' + A.icon('copy') + '</button></span>' +
       '<p class="code-label">קוד המשחק</p>' +
       '<div class="code-digits" aria-label="קוד ' + esc(d.code) + '">' + String(d.code).split('').map((c) => '<span>' + esc(c) + '</span>').join('') + '</div>' +
