@@ -70,7 +70,9 @@
 
     if (room.status === 'waiting') {
       A.Sound.stopMusic();
-      if (P.screen !== 'waiting') P.render('waiting', M.session);
+      const tIdx = room.teamCount ? (room.teams || {})[A.Net.uid()] : null;
+      const team = tIdx != null ? A.Teams.get(tIdx) : null;
+      if (P.screen !== 'waiting' || (P.data.team || null) !== team) P.render('waiting', Object.assign({}, M.session, { team }));
       return;
     }
 

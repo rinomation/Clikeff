@@ -31,6 +31,7 @@
   H.onDuration = (v) => { S.cfg.duration = v; saveCfg(); };
   H.onTrack = (v) => { S.cfg.track = v; saveCfg(); };
   H.boardEvery = (v) => { S.cfg.boardEvery = Number(v); saveCfg(); S.showSetup(); };
+  H.teams = (v) => { S.cfg.teams = Number(v); saveCfg(); S.showSetup(); };
   H.advance = (v) => { S.cfg.advance = v; saveCfg(); S.showSetup(); };
   H.mode = (v) => { S.cfg.mode = v; saveCfg(); S.showSetup(); };
   H.source = (v) => { S.cfg.source = v; S.preview = null; saveCfg(); S.showSetup(); };
@@ -188,7 +189,7 @@
     try {
       const questions = buildQuestions();
       const code = await A.Net.createRoom({
-        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
+        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {}, boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
         questions, qCount: questions.length, source: S.cfg.source
       });
       A.store.set('hostRoom', code);
@@ -219,7 +220,7 @@
       }
       draw();
     });
-    S.unsubPlayers = A.Net.watchPlayers(code, (list) => { S.players = list; draw(); });
+    S.unsubPlayers = A.Net.watchPlayers(code, (list) => { S.players = list; assignTeams(); draw(); });
     A.SyncHost.attach({
       code,
       room: () => S.room,
@@ -236,6 +237,7 @@
     if (!keepCode) { S.code = null; S.players = []; }
   }
   function backToSetup() {
+    S.teamMap = null;
     detach(false);
     A.store.del('hostRoom');
     S.showSetup();
@@ -345,6 +347,22 @@
     }, wait);
   }
 
+  /* שיבוץ לקבוצות של מי שהצטרף — המנחה כותב את המפה לחדר */
+  let teamBusy = false;
+  async function assignTeams() {
+    if (!S.room || !S.room.teamCount || teamBusy) return;
+    const merged = Object.assign({}, S.room.teams || {}, S.teamMap || {});
+    const map = A.Teams.assign(Object.assign({}, S.room, { teams: merged }), S.players) || (Object.keys(S.teamMap || {}).length > Object.keys(S.room.teams || {}).length ? merged : null);
+    if (!map) return;
+    S.teamMap = map;
+    teamBusy = true;
+    try { await A.Net.updateRoom(S.code, { teams: map }); S.room = Object.assign({}, S.room, { teams: map }); draw(); }
+    catch (e) { /* ננסה בפעם הבאה */ }
+    finally { teamBusy = false; }
+  }
+  const teamMapNow = () => Object.assign({}, (S.room && S.room.teams) || {}, S.teamMap || {});
+  const teamData = (list) => (S.room && S.room.teamCount ? A.Teams.scores(Object.assign({}, S.room, { teams: teamMapNow() }), list) : null);
+
   let drawQueued = false;
   function draw() {
     if (drawQueued) return;
@@ -353,14 +371,14 @@
       drawQueued = false;
       if (!S.room) return;
       const list = players();
-      const base = { code: S.code, players: list, total: (S.room.questions || []).length };
+      const base = { code: S.code, players: list, total: (S.room.questions || []).length, teams: teamData(list), teamMap: teamMapNow() };
       if (S.view === 'lobby') {
         M.render('lobby', Object.assign(base, { qCount: base.total, duration: S.room.duration, track: S.room.track }));
       } else if (S.view === 'results') {
         M.render('results', base);
       } else if (S.view === 'sync' && S.room.mode === 'sync' && S.room.status === 'active') {
         const r = S.room, i = r.qIndex || 0, Y = A.SyncHost;
-        const st = { i, total: base.total, q: r.questions[i], paused: Y.paused, last: i + 1 >= base.total, manual: r.advance === 'manual' };
+        const st = { i, total: base.total, q: r.questions[i], paused: Y.paused, last: i + 1 >= base.total, manual: r.advance === 'manual', teams: base.teams };
         if (r.phase === 'board') {
           const bk = 'b' + i + '-' + r.version + '-' + Y.paused;
           if (M.screen === 'stageBoard' && S.boardKey === bk) return;

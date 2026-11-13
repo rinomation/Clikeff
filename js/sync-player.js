@@ -25,7 +25,8 @@
       if (Z.st.ans[i] != null) return showSent();
       if (P.screen === 'pad' && P.data.i === i) return;
       P.render('pad', { i, total: room.questions.length, answers: room.questions[i].a,
-        survey: room.questions[i].k === 's', rem: remaining(), duration: room.duration });
+        survey: room.questions[i].k === 's', rem: remaining(), duration: room.duration,
+        team: room.teamCount && (room.teams || {})[A.Net.uid()] != null ? A.Teams.get(room.teams[A.Net.uid()]) : null });
       startLoop();
     } else if (room.phase === 'reveal') {
       stopLoop();

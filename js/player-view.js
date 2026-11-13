@@ -57,6 +57,7 @@
     '<span class="disc"><img src="' + A.img(A.safeAvatar(d.avatar)) + '" alt=""></span></div>' +
     '<h2 class="wait-hello">היי <bdi>' + esc(d.name) + '</bdi>!</h2>' +
     '<p class="wait-room">נכנסת למשחק <bdi dir="ltr">' + esc(A.prettyCode(d.code)) + '</bdi></p>' +
+    (d.team ? '<div class="team-badge" style="--c:' + d.team.color + '"><img src="' + A.img(d.team.img) + '" alt="">בקבוצת <b>' + esc(d.team.name) + '</b></div>' : '') +
     '<div class="wait-status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>' +
     (d.message ? esc(d.message) : 'מחכים שהמנחה יתחיל') + '</div>' +
     '<p class="wait-hint">המשחק יתחיל לבד ברגע שהמנחה ילחץ "התחל". כדאי להגביר את הצליל 🔊</p>' +
@@ -135,6 +136,7 @@
     '<section class="screen screen-game screen-pad">' +
     '<header class="game-top">' +
     '<span class="pill pill-counter">שאלה <b>' + (d.i + 1) + '</b> מתוך <b>' + d.total + '</b></span>' +
+    (d.team ? '<span class="pill team-pill" style="--c:' + d.team.color + '"><img src="' + A.img(d.team.img) + '" alt="">' + esc(d.team.name) + '</span>' : '') +
     '<span class="spacer"></span>' +
     '<span class="time-num" aria-live="off">' + A.icon('clock') + '<span id="time-left">' + Math.ceil(d.rem) + '</span></span>' +
     V.muteBtn(d.muted) + '</header>' +

@@ -200,6 +200,11 @@
       '<button type="button" data-action="mode" data-value="sync" aria-pressed="' + (d.mode !== 'self') + '">כולם יחד על המקרן</button>' +
       '<button type="button" data-action="mode" data-value="self" aria-pressed="' + (d.mode === 'self') + '">כל אחד בקצב שלו</button>' +
       '</div><span class="field-hint">' + (d.mode === 'self' ? 'כל ילד רואה את השאלות בטלפון ומתקדם לבד.' : 'השאלות מוצגות במסך שלך, והילדים רואים בטלפון רק את כפתורי התשובות.') + '</span></div>' +
+      (d.mode !== 'self' ? '<div class="field"><span class="field-label">משחק קבוצות</span>' +
+      '<div class="segmented" role="group" aria-label="משחק קבוצות" style="margin:0;grid-template-columns:repeat(4,1fr)">' +
+      [[0, 'בלי'], [2, '2 קבוצות'], [3, '3 קבוצות'], [4, '4 קבוצות']].map(([n, l]) =>
+        '<button type="button" data-action="teams" data-value="' + n + '" aria-pressed="' + ((d.teams || 0) === n) + '">' + l + '</button>').join('') +
+      '</div>' + (d.teams ? '<span class="field-hint">הילדים מתחלקים אוטומטית. ניקוד קבוצה = ממוצע הנקודות של חבריה.</span>' : '') + '</div>' : '') +
       (d.mode !== 'self' ? '<div class="field"><span class="field-label">טבלת מובילים על המקרן</span>' +
       '<div class="segmented" role="group" aria-label="טבלת מובילים" style="margin:0;grid-template-columns:repeat(3,1fr)">' +
       [[3, 'כל 3 שאלות'], [5, 'כל 5 שאלות'], [0, 'בלי']].map(([n, l]) =>
@@ -252,7 +257,13 @@
       '<div class="players-head"><div class="player-count"><span class="big">' + d.players.length + '</span>' +
       '<span class="lbl">משתתפים<br>הצטרפו</span></div>' +
       '<img class="anim-bob" src="' + A.img('balloon') + '" alt="" style="width:56px"></div>' +
-      (d.players.length
+      (d.players.length && d.teams
+        ? '<div class="team-cols">' + d.teams.slice().sort((a, b) => a.i - b.i).map((t) =>
+            '<div class="team-col" style="--c:' + t.color + '"><h4><img src="' + A.img(t.img) + '" alt="">' + esc(t.name) + ' <small>' + t.count + '</small></h4>' +
+            '<div class="player-cloud">' + d.players.filter((p) => d.teamMap[p.id] === t.i).map((p) =>
+              '<span class="p-chip' + (p.isNew !== false ? ' is-new' : '') + '">' + A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi></span>').join('') +
+            '</div></div>').join('') + '</div>'
+        : d.players.length
         ? '<div class="player-cloud">' + d.players.map((p, i) =>
             '<span class="p-chip' + (p.offline ? ' is-off' : '') + (p.isNew !== false ? ' is-new' : '') + '" style="animation-delay:' + Math.min(i, 20) * 0.03 + 's">' +
             A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi></span>').join('') + '</div>'
@@ -368,7 +379,8 @@
         '<span class="sec">' + f.s.toFixed(1) + ' שנ׳</span></li>').join('') + '</ol>'
         : '<p class="field-hint">' + (isSurvey ? 'אף אחד לא הצביע' : 'אף אחד לא ענה נכון הפעם') + '</p>') +
       '</div>' +
-      (isSurvey ? '' : '<div class="card board-card"><h3 class="card-title"><img src="' + A.img('trophy') + '" alt="">המובילים</h3>' +
+      (d.teams ? '<div class="card board-card"><h3 class="card-title"><img src="' + A.img('crown') + '" alt="">הקבוצות</h3>' + A.Teams.bars(d.teams) + '</div>' :
+      isSurvey ? '' : '<div class="card board-card"><h3 class="card-title"><img src="' + A.img('trophy') + '" alt="">המובילים</h3>' +
         '<ol class="fast-list leaders">' + (d.leaders || []).slice(0, 5).map((p) =>
           '<li>' + A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi><span class="sec">' + A.fmt(p.total) + '</span></li>').join('') +
         '</ol></div>') +
@@ -391,9 +403,10 @@
       '</div>' +
       '<div class="lead-board card">' +
       '<h2 class="lead-title"><img src="' + A.img('trophy') + '" alt="">המובילים עד עכשיו</h2>' +
+      (d.teams ? '<div class="lead-teams">' + A.Teams.bars(d.teams) + '</div>' : '') +
       (top.length ? '<ol class="lead-rows">' + top.map((p, k) =>
         '<li class="lead-row' + (k === 0 ? ' first' : '') + '" style="animation-delay:' + (top.length - k) * 0.25 + 's">' +
-        '<span class="lr-rank">' + (k < 3 ? '<img src="' + A.img(medals[k]) + '" alt="מקום ' + (k + 1) + '">' : k + 1) + '</span>' +
+        '<span class="lr-rank">' + (k < 3 && p.total > 0 ? '<img src="' + A.img(medals[k]) + '" alt="מקום ' + (k + 1) + '">' : k + 1) + '</span>' +
         A.avatarHTML(p.avatar) +
         '<bdi class="lr-name">' + esc(p.name) + '</bdi>' +
         '<span class="lr-pts">' + A.fmt(p.total) + ' <small>נק׳</small></span></li>').join('') + '</ol>'
@@ -426,6 +439,8 @@
     return (
       '<section class="admin-main">' +
       '<div class="results-hero"><h2>🎉 והמנצחים הם…</h2></div>' +
+      (d.teams && d.teams.length ? '<div class="team-win card" style="--c:' + d.teams[0].color + '"><img src="' + A.img(d.teams[0].img) + '" alt="">' +
+        '<div><small>הקבוצה המנצחת</small><b>' + esc(d.teams[0].name) + '</b></div></div>' + A.Teams.bars(d.teams) : '') +
       '<div class="podium">' +
       top.map((p, i) =>
         '<div class="place p' + (i + 1) + '">' + A.avatarHTML(p.avatar) +

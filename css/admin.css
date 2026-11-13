@@ -423,3 +423,31 @@
 .qe-correct input:checked + .qe-shape { opacity: 1; box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--ok); }
 .qe-correct input:focus-visible + .qe-shape { box-shadow: var(--focus); }
 .qe-ans > .qe-shape { opacity: 1; }
+
+/* משחק קבוצות */
+.team-bars { display: grid; gap: 10px; }
+.team-bar { display: grid; grid-template-columns: 44px minmax(90px, auto) minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.team-bar img { width: 44px; height: 44px; }
+.tb-name { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; white-space: nowrap; }
+.tb-name small { color: var(--text-mute); font-weight: 500; font-size: .8em; }
+.tb-track { height: 22px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.tb-track i { display: block; height: 100%; min-width: 6px; border-radius: inherit; background: var(--c); transition: width .8s var(--ease-out); }
+.tb-pts { font-family: var(--font-display); font-size: 1.3rem; min-width: 3ch; text-align: end; font-variant-numeric: tabular-nums; }
+.team-bar.lead .tb-name::after { content: " 👑"; }
+.lead-teams { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.lead-teams .team-bar img { width: 56px; height: 56px; }
+.lead-teams .tb-name { font-size: 1.5rem; }
+.lead-teams .tb-track { height: 30px; }
+.lead-teams .tb-pts { font-size: 1.7rem; }
+.team-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.team-col { border-radius: var(--radius); border: 2px solid var(--c); padding: 12px; background: var(--surface-2); }
+.team-col h4 { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 1.2rem; margin: 0 0 10px; }
+.team-col h4 img { width: 34px; height: 34px; }
+.team-col h4 small { margin-inline-start: auto; background: var(--c); color: #fff; border-radius: 99px; padding: 0 10px; font-size: .9rem; }
+.team-col .p-chip { font-size: 1rem; }
+.team-col .p-chip .avatar { width: 32px; height: 32px; }
+.team-win { display: flex; align-items: center; justify-content: center; gap: 16px; max-width: 520px; margin: 0 auto 16px; border: 3px solid var(--c); animation: pop-in .7s var(--ease-bounce) both; }
+.team-win img { width: 80px; height: 80px; }
+.team-win small { display: block; color: var(--text-soft); font-weight: 600; }
+.team-win b { font-family: var(--font-display); font-size: 2.2rem; }
+.results-hero + .team-win + .team-bars { max-width: 760px; margin: 0 auto 10px; }
