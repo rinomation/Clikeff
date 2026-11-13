@@ -451,3 +451,32 @@
 .team-win small { display: block; color: var(--text-soft); font-weight: 600; }
 .team-win b { font-family: var(--font-display); font-size: 2.2rem; }
 .results-hero + .team-win + .team-bars { max-width: 760px; margin: 0 auto 10px; }
+
+/* מסך ראשי */
+.home { max-width: 1100px; margin: 0 auto; padding: clamp(20px, 5vh, 56px) clamp(16px, 3vw, 32px) 40px; display: grid; gap: clamp(24px, 5vh, 48px); }
+.home-hero { text-align: center; display: grid; justify-items: center; gap: 12px; }
+.home-logo { width: clamp(90px, 12vw, 130px); filter: drop-shadow(0 14px 24px rgba(255, 170, 0, .4)); }
+.home-title {
+  font-size: clamp(3.6rem, 11vw, 7rem); font-weight: 700; line-height: 1; letter-spacing: -.02em;
+  background: linear-gradient(135deg, var(--primary) 0%, #e8345a 55%, var(--accent) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .08em;
+}
+.home-tag { font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2.1rem); font-weight: 600; }
+.home-sub { color: var(--text-soft); font-size: 1.1rem; max-width: 52ch; margin-bottom: 10px; }
+.home-feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.home-feat { display: grid; justify-items: center; text-align: center; gap: 6px; padding: 20px 16px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+.home-feat img { width: 54px; height: 54px; }
+.home-feat b { font-family: var(--font-display); font-size: 1.15rem; }
+.home-feat span { color: var(--text-soft); font-size: .92rem; }
+
+/* לשוניות ההכנה */
+.setup-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 6px; margin-bottom: 18px; border-radius: var(--radius-lg); background: var(--surface-2); border: 1px solid var(--border); max-width: 640px; }
+.setup-tabs button { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; border: 0; border-radius: var(--radius); background: transparent; font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; color: var(--text-soft); }
+.setup-tabs button i { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--surface-3); font-style: normal; font-size: 1rem; }
+.setup-tabs button[aria-selected="true"] { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
+.setup-tabs button[aria-selected="true"] i { background: var(--primary); color: var(--on-primary); }
+.setup-panel { max-width: 860px; }
+.tab-next { display: flex; justify-content: flex-start; margin-top: 16px; }
+.lb-title { font-family: var(--font-display); font-weight: 600; align-self: center; margin-inline-end: 4px; }
+.setup-head, .setup-tabs, .setup-panel { max-width: 860px; margin-inline: auto; }
+.setup-tabs { margin-bottom: 18px; }

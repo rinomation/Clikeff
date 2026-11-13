@@ -15,10 +15,12 @@
       playing: S.playing || null,
       preview: S.preview,
       editor: S.editor || null,
+      tab: S.tab || 'questions',
       saved: S.bank ? { title: S.bank.title, count: S.bank.items.length, updated: S.bank.updated } : null
     });
   }
   S.showSetup = () => { S.view = 'setup'; M.render('setup', setupData()); };
+  S.showHome = () => { S.view = 'home'; M.render('home', {}); };
 
   let saveT = null;
   function saveCfg() {
@@ -33,6 +35,8 @@
   H.boardEvery = (v) => { S.cfg.boardEvery = Number(v); saveCfg(); S.showSetup(); };
   H.teams = (v) => { S.cfg.teams = Number(v); saveCfg(); S.showSetup(); };
   H.advance = (v) => { S.cfg.advance = v; saveCfg(); S.showSetup(); };
+  H['go-setup'] = () => { S.tab = 'questions'; S.showSetup(); window.scrollTo(0, 0); };
+  H.tab = (v) => { S.tab = v; S.showSetup(); window.scrollTo(0, 0); };
   H.mode = (v) => { S.cfg.mode = v; saveCfg(); S.showSetup(); };
   H.source = (v) => { S.cfg.source = v; S.preview = null; saveCfg(); S.showSetup(); };
 
@@ -63,6 +67,7 @@
       updated: d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
     };
     S.preview = null;
+    S.tab = 'settings';
     A.store.set('hostBank', S.bank);
     S.showSetup();
     try {
@@ -163,6 +168,7 @@
       updated: d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
     };
     S.editor = null;
+    S.tab = 'settings';
     A.store.set('hostBank', S.bank);
     S.showSetup();
     try {
@@ -240,7 +246,7 @@
     S.teamMap = null;
     detach(false);
     A.store.del('hostRoom');
-    S.showSetup();
+    S.showHome();
   }
 
   H.start = () => (S.room && S.room.mode === 'sync' ? A.SyncHost.start() : A.Net.updateRoom(S.code, { status: 'active', startedAt: A.FsRest.NOW }))
@@ -424,7 +430,7 @@
   async function boot() {
     S.cfg = Object.assign(S.cfg, A.store.get('hostCfg', {}));
     S.bank = A.store.get('hostBank', null);
-    S.showSetup();
+    S.showHome();
     document.addEventListener('pointerdown', () => A.Sound.unlock(), { once: true });
     try {
       await A.Net.init();

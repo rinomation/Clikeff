@@ -36,23 +36,66 @@
   /* ---------- הכנה ----------
      d = { source:'builtin'|'file', duration, track, playing, showRank,
            saved:{title,count,updated}|null, preview:{fileName,rows:[...]}|null } */
+  /* ---------- מסך ראשי ---------- */
+  V.home = () =>
+    '<section class="home">' +
+    '<div class="home-hero">' +
+    '<img class="home-logo anim-bob" src="' + A.img('light_bulb') + '" alt="">' +
+    '<h1 class="home-title" dir="ltr">Clikeff</h1>' +
+    '<p class="home-tag">חידון חי וחוויתי לכל הכיתה</p>' +
+    '<p class="home-sub">השאלות על המקרן, הילדים עונים מהטלפון — עם מוזיקה, שעון, קבוצות ופודיום מנצחים.</p>' +
+    '<button class="btn btn-accent btn-xl" type="button" data-action="go-setup">' + A.icon('sparkle') + 'פתיחת חידון חדש</button>' +
+    '</div>' +
+    '<div class="home-feats">' +
+    [['books', 'שאלות משלכם', 'כותבים בעצמכם או מעלים קובץ אקסל'],
+      ['video_game', 'כולם יחד על המקרן', 'הילדים רואים בטלפון רק את כפתורי התשובות'],
+      ['rocket', 'המהירים ביותר', 'אחרי כל שאלה — מי ענה הכי מהר ונכון'],
+      ['crown', 'משחק קבוצות', 'האריות מול הדולפינים, עם ניקוד קבוצתי'],
+      ['fire', 'מוזיקה ומתח', '5 מנגינות, שעון מתקתק ופעמון'],
+      ['trophy', 'פודיום מנצחים', 'טבלת מובילים וקונפטי בסוף']
+    ].map((f) => '<div class="home-feat"><img src="' + A.img(f[0]) + '" alt=""><b>' + f[1] + '</b><span>' + f[2] + '</span></div>').join('') +
+    '</div></section>';
+
+  /* ---------- הכנה: שני שלבים בלשוניות ---------- */
+  V.summary = (d) => {
+    const t = V.track(d.track);
+    const q = d.source === 'file' && d.saved ? '<b>' + d.saved.count + '</b> שאלות · ' + esc(d.saved.title) : '<b>10</b> שאלות מהמאגר';
+    const sync = d.mode !== 'self';
+    const items = [
+      ['books', q],
+      ['alarm_clock', '<b>' + d.duration + '</b> שניות לשאלה'],
+      ['video_game', sync ? 'כולם יחד על המקרן' : 'כל אחד בקצב שלו']
+    ];
+    if (sync) {
+      items.push(['hourglass_not_done', d.advance === 'manual' ? 'מעבר בלחיצה' : 'מעבר אוטומטי']);
+      items.push(['crown', d.teams ? '<b>' + d.teams + '</b> קבוצות' : 'בלי קבוצות']);
+      items.push(['trophy', d.boardEvery === 0 ? 'בלי טבלת מובילים' : 'מובילים כל <b>' + (d.boardEvery || 3) + '</b>']);
+    }
+    items.push([t.img, esc(t.name)]);
+    if (d.showRank) items.push(['glowing_star', 'דירוג אישי']);
+    return items.map((x) => '<span class="pill"><img src="' + A.img(x[0]) + '" alt="">' + x[1] + '</span>').join('');
+  };
+
   V.setup = (d) => {
-    const qCount = d.source === 'file' && d.saved ? d.saved.count : 10;
+    const tab = d.tab === 'settings' ? 'settings' : 'questions';
     return (
       '<section class="admin-main">' +
-      '<div class="page-head"><div><h2>מכינים חידון חדש</h2>' +
-      '<p>בוחרים שאלות והגדרות — ופותחים משחק בלחיצה אחת.</p></div></div>' +
-      '<div class="setup-grid">' +
-      V.questionsCard(d) +
-      V.settingsCard(d) +
+      '<div class="page-head setup-head"><div><h2>מכינים חידון חדש</h2>' +
+      '<p>שלב א׳ — בוחרים שאלות. שלב ב׳ — הגדרות. ואז פותחים משחק.</p></div></div>' +
+      '<div class="setup-tabs" role="tablist">' +
+      '<button type="button" role="tab" data-action="tab" data-value="questions" aria-selected="' + (tab === 'questions') + '"><i>א</i>שאלות</button>' +
+      '<button type="button" role="tab" data-action="tab" data-value="settings" aria-selected="' + (tab === 'settings') + '"><i>ב</i>הגדרות</button>' +
+      '</div>' +
+      '<div class="setup-panel">' +
+      (tab === 'questions'
+        ? V.questionsCard(d) + (d.editor || d.preview ? '' :
+          '<div class="tab-next"><button class="btn btn-primary btn-lg" type="button" data-action="tab" data-value="settings">המשך להגדרות ' + A.icon('next') + '</button></div>')
+        : V.settingsCard(d) +
+          '<div class="tab-next"><button class="btn btn-ghost" type="button" data-action="tab" data-value="questions">' + A.icon('prev') + 'חזרה לשאלות</button></div>') +
       '</div>' +
       '<div class="launch-bar">' +
-      '<div class="lb-meta">' +
-      '<span class="pill"><img src="' + A.img('books') + '" alt=""><b>' + qCount + '</b> שאלות</span>' +
-      '<span class="pill"><img src="' + A.img('alarm_clock') + '" alt=""><b>' + d.duration + '</b> שניות לשאלה</span>' +
-      '<span class="pill"><img src="' + A.img(V.track(d.track).img) + '" alt="">' + esc(V.track(d.track).name) + '</span>' +
-      '</div>' +
-      '<button class="btn btn-accent btn-lg" type="button" data-action="open-room">' + A.icon('sparkle') + 'פתיחת משחק חדש</button>' +
+      '<div class="lb-meta"><span class="lb-title">סיכום:</span>' + V.summary(d) + '</div>' +
+      '<button class="btn btn-accent btn-lg" type="button" data-action="open-room">' + A.icon('sparkle') + 'פתיחת המשחק</button>' +
       '</div>' +
       '</section>'
     );
@@ -238,7 +281,7 @@
       '<section class="admin-main"><div class="lobby">' +
       '<div class="card join-panel">' +
       '<h2 class="jp-title">הצטרפו עכשיו!</h2>' +
-      '<p class="field-hint" style="margin-bottom:6px">נכנסים בטלפון לכתובת:</p>' +
+      '<p class="field-hint" style="margin-bottom:6px">נכנסים לקישור:</p>' +
       '<span class="jp-url"><span>' + esc(A.joinUrl('').replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</span>' +
       '<button type="button" data-action="copy-link" aria-label="העתקת קישור">' + A.icon('copy') + '</button></span>' +
       '<p class="code-label">קוד המשחק</p>' +
