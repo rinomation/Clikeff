@@ -401,3 +401,25 @@
 .lr-name { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.4rem, 2.6vw, 2.2rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lr-pts { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.3rem, 2.4vw, 2rem); color: var(--primary); font-variant-numeric: tabular-nums; }
 .lr-pts small { font-size: .55em; color: var(--text-soft); font-weight: 500; }
+
+/* כתיבת שאלות ידנית */
+.qe-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; max-height: 420px; overflow: auto; }
+.qe-item { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
+.qe-item.is-editing { border-color: var(--primary); background: var(--primary-soft); }
+.qe-num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); font-weight: 700; color: var(--text-soft); font-size: .85rem; }
+.qe-body b { display: block; margin-bottom: 6px; font-weight: 600; }
+.qe-tools { display: flex; gap: 4px; }
+.qe-tools .icon-btn { width: 34px; height: 34px; font-size: .9rem; }
+.qe-tools .icon-btn svg { width: 16px; height: 16px; }
+.qe-form { padding: 16px; border-radius: var(--radius); border: 2px dashed var(--border-strong); background: var(--surface); }
+.qe-form h4 { font-family: var(--font-display); font-size: 1.15rem; margin: 0 0 10px; }
+.qe-form textarea.input { resize: vertical; min-height: 64px; }
+.qe-ans { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.qe-ans .input { min-height: 46px; font-size: 1rem; }
+.qe-correct { position: relative; cursor: pointer; flex: none; }
+.qe-correct input { position: absolute; opacity: 0; }
+.qe-shape { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--c); opacity: .45; transition: opacity .15s, box-shadow .15s; flex: none; }
+.qe-shape svg { width: 55%; height: 55%; fill: #fff; }
+.qe-correct input:checked + .qe-shape { opacity: 1; box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--ok); }
+.qe-correct input:focus-visible + .qe-shape { box-shadow: var(--focus); }
+.qe-ans > .qe-shape { opacity: 1; }

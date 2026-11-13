@@ -14,6 +14,7 @@
     return Object.assign({}, S.cfg, {
       playing: S.playing || null,
       preview: S.preview,
+      editor: S.editor || null,
       saved: S.bank ? { title: S.bank.title, count: S.bank.items.length, updated: S.bank.updated } : null
     });
   }
@@ -78,6 +79,97 @@
     S.showSetup();
     A.Net.clearBank().catch(() => {});
   };
+  /* ---------- כתיבת שאלות ידנית ---------- */
+  const blankForm = () => ({ k: 'q', t: '', a: ['', '', '', ''], c: null, idx: null });
+
+  /** שומר את מה שהוקלד בטופס לפני ציור מחדש */
+  function readForm() {
+    const ed = S.editor;
+    if (!ed) return;
+    const t = A.$('#qe-title'); if (t) ed.title = t.value;
+    const q = A.$('#qe-text'); if (q) ed.form.t = q.value;
+    A.$$('.qe-a').forEach((inp) => { ed.form.a[Number(inp.dataset.j)] = inp.value; });
+    const c = A.$('input[name="qe-c"]:checked'); ed.form.c = c ? Number(c.value) : ed.form.c;
+  }
+  const redraw = () => { S.showSetup(); const q = A.$('#qe-text'); if (q && !S.editor.form.t) q.focus(); };
+
+  H['qe-open'] = (v) => {
+    const base = v === 'saved' && S.bank ? S.bank : { title: '', items: [] };
+    S.editor = { title: base.title, items: base.items.map((it) => Object.assign({}, it, { a: it.a.slice() })), form: blankForm(), error: '' };
+    S.cfg.source = 'file'; S.preview = null;
+    redraw();
+  };
+  H['qe-close'] = () => { S.editor = null; S.showSetup(); };
+  H['qe-kind'] = (v) => { readForm(); S.editor.form.k = v; redraw(); };
+  H['qe-add-ans'] = () => { readForm(); if (S.editor.form.a.length < 6) S.editor.form.a.push(''); redraw(); };
+  H['qe-rm-ans'] = (v) => {
+    readForm();
+    const f = S.editor.form, j = Number(v);
+    f.a.splice(j, 1);
+    if (f.c === j) f.c = null; else if (f.c > j) f.c--;
+    redraw();
+  };
+  H['qe-save-item'] = () => {
+    readForm();
+    const ed = S.editor, f = ed.form;
+    const t = f.t.replace(/\s+/g, ' ').trim();
+    const a = f.a.map((x) => x.replace(/\s+/g, ' ').trim());
+    let last = a.length - 1; while (last >= 0 && !a[last]) last--;
+    const ans = a.slice(0, last + 1);
+    ed.error = !t ? 'צריך לכתוב את השאלה'
+      : ans.indexOf('') >= 0 ? 'יש תשובה ריקה באמצע — מלאו אותה או הסירו אותה'
+      : ans.length < 2 ? 'צריך לפחות שתי תשובות'
+      : f.k === 'q' && (f.c == null || f.c >= ans.length) ? 'סמנו איזו תשובה נכונה (לחיצה על הצורה הצבעונית)'
+      : '';
+    if (ed.error) return redraw();
+    const item = f.k === 's' ? { k: 's', t, a: ans } : { k: 'q', t, a: ans, c: f.c };
+    if (f.idx != null) ed.items[f.idx] = item; else ed.items.push(item);
+    ed.form = blankForm();
+    redraw();
+  };
+  H['qe-edit'] = (v) => {
+    readForm();
+    const it = S.editor.items[Number(v)];
+    const a = it.a.slice(); while (a.length < 2) a.push('');
+    S.editor.form = { k: it.k, t: it.t, a, c: it.k === 's' ? null : it.c, idx: Number(v) };
+    S.editor.error = '';
+    redraw();
+  };
+  H['qe-cancel-edit'] = () => { S.editor.form = blankForm(); S.editor.error = ''; redraw(); };
+  H['qe-del'] = (v) => {
+    readForm();
+    const n = Number(v);
+    S.editor.items.splice(n, 1);
+    if (S.editor.form.idx === n) S.editor.form = blankForm();
+    redraw();
+  };
+  const move = (n, d) => {
+    readForm();
+    const it = S.editor.items, m = n + d;
+    if (m < 0 || m >= it.length) return;
+    [it[n], it[m]] = [it[m], it[n]];
+    S.editor.form.idx = null;
+    redraw();
+  };
+  H['qe-up'] = (v) => move(Number(v), -1);
+  H['qe-down'] = (v) => move(Number(v), 1);
+  H['qe-save-all'] = async () => {
+    readForm();
+    const ed = S.editor;
+    const d = new Date();
+    S.bank = {
+      title: ed.title.trim() || 'השאלות שלי', items: ed.items,
+      updated: d.toLocaleDateString('he-IL') + ' ' + d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+    };
+    S.editor = null;
+    A.store.set('hostBank', S.bank);
+    S.showSetup();
+    try {
+      await A.Net.saveHost({ bank: S.bank });
+      A.toast('נשמרו ' + S.bank.items.length + ' שאלות', { type: 'ok', img: 'check_mark_button' });
+    } catch (e) { A.toast('נשמר במחשב הזה בלבד: ' + A.Net.errorText(e), { type: 'bad' }); }
+  };
+
   H.template = () => A.Excel.template().catch((e) => A.toast(e.message, { type: 'bad' }));
   M.handlers.showRank = (v) => { S.cfg.showRank = v; saveCfg(); };
 

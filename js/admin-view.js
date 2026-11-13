@@ -65,6 +65,8 @@
         '<div class="info-box"><img src="' + A.img('scroll') + '" alt="">' +
         '<div><b>10 שאלות אקראיות מהמאגר</b>' +
         '<p>תנ"ך, מסורת וידע כללי. בכל משחק נבחרות שאלות אחרות, והתשובות מעורבבות.</p></div></div>';
+    } else if (d.editor) {
+      body = V.editor(d.editor);
     } else if (d.preview) {
       const rows = d.preview.rows;
       const ok = rows.filter((r) => r.valid);
@@ -91,7 +93,7 @@
         (d.saved
           ? '<div class="saved-set"><img src="' + A.img('books') + '" alt="">' +
             '<div class="meta"><b>' + esc(d.saved.title) + '</b><span>' + d.saved.count + ' פריטים · נשמר ' + esc(d.saved.updated) + '</span></div>' +
-            '<button class="btn btn-ghost btn-sm" type="button" data-action="view-saved">צפייה</button>' +
+            '<button class="btn btn-ghost btn-sm" type="button" data-action="qe-open" data-value="saved">✏️ עריכה</button>' +
             '<button class="btn btn-ghost btn-sm" type="button" data-action="delete-saved" aria-label="מחיקת השאלות השמורות">' + A.icon('trash') + '</button>' +
             '</div><p class="field-hint" style="margin:14px 0 8px">רוצים להחליף? העלו קובץ חדש:</p>'
           : '') +
@@ -99,6 +101,7 @@
         '<input type="file" id="file-input" accept=".xlsx,.xls,.csv">' +
         '<img src="' + A.img('wrapped_gift') + '" alt="">' +
         '<b>גררו לכאן קובץ אקסל</b><span>או לחצו לבחירת קובץ (xlsx)</span></label>' +
+        '<button class="btn btn-primary btn-block" type="button" data-action="qe-open" data-value="new" style="margin-top:12px">✍️ כתיבת שאלות בעצמי</button>' +
         '<p style="margin-top:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:var(--text-mute);font-size:.9rem">' +
         'אין לכם קובץ? <button class="link-btn" type="button" data-action="template">' + A.icon('download') + 'הורדת תבנית ריקה</button></p>';
     }
@@ -112,6 +115,60 @@
       (d.saved ? ' <span class="badge badge-primary">' + d.saved.count + '</span>' : '') + '</button>' +
       '</div>' + body + '</div>'
     );
+  };
+
+  /* ---------- כתיבת שאלות ידנית ----------
+     d.editor = { title, items:[{k,t,a,c}], form:{k,t,a:[],c,idx}, error } */
+  V.editor = (ed) => {
+    const f = ed.form;
+    const isS = f.k === 's';
+    const list = ed.items.length
+      ? '<ol class="qe-list">' + ed.items.map((it, n) =>
+        '<li class="qe-item' + (f.idx === n ? ' is-editing' : '') + '">' +
+        '<span class="qe-num">' + (n + 1) + '</span>' +
+        '<div class="qe-body"><b>' + (it.k === 's' ? '📊 ' : '') + esc(it.t) + '</b><div class="ans-list">' +
+        it.a.map((a, j) => '<span class="ans' + (it.k !== 's' && j === it.c ? ' is-correct' : '') + '">' + esc(a) + '</span>').join('') +
+        '</div></div>' +
+        '<div class="qe-tools">' +
+        '<button class="icon-btn" type="button" data-action="qe-up" data-value="' + n + '" aria-label="למעלה"' + (n === 0 ? ' disabled' : '') + '>' + A.icon('prev') + '</button>' +
+        '<button class="icon-btn" type="button" data-action="qe-down" data-value="' + n + '" aria-label="למטה"' + (n === ed.items.length - 1 ? ' disabled' : '') + '>' + A.icon('next') + '</button>' +
+        '<button class="icon-btn" type="button" data-action="qe-edit" data-value="' + n + '" aria-label="עריכה">✏️</button>' +
+        '<button class="icon-btn" type="button" data-action="qe-del" data-value="' + n + '" aria-label="מחיקה">' + A.icon('trash') + '</button>' +
+        '</div></li>').join('') + '</ol>'
+      : '<p class="field-hint" style="text-align:center;padding:10px">עוד אין שאלות. כתבו את הראשונה בטופס למטה.</p>';
+
+    const form =
+      '<div class="qe-form">' +
+      '<h4>' + (f.idx != null ? 'עריכת שאלה ' + (f.idx + 1) : 'שאלה חדשה') + '</h4>' +
+      '<div class="segmented" style="margin-bottom:12px">' +
+      '<button type="button" data-action="qe-kind" data-value="q" aria-pressed="' + !isS + '">שאלה (עם תשובה נכונה)</button>' +
+      '<button type="button" data-action="qe-kind" data-value="s" aria-pressed="' + isS + '">📊 סקר (בלי ניקוד)</button></div>' +
+      '<label class="field"><span class="field-label">' + (isS ? 'שאלת הסקר' : 'השאלה') + '</span>' +
+      '<textarea class="input" id="qe-text" rows="2" maxlength="200">' + esc(f.t) + '</textarea></label>' +
+      '<div class="field"><span class="field-label">תשובות' + (isS ? '' : ' — סמנו את הנכונה') + '</span>' +
+      f.a.map((a, j) =>
+        '<div class="qe-ans">' +
+        (isS ? '<span class="qe-shape" style="--c:var(--a' + (j + 1) + ')">' + A.shape(j) + '</span>' :
+          '<label class="qe-correct" title="התשובה הנכונה"><input type="radio" name="qe-c" value="' + j + '"' + (f.c === j ? ' checked' : '') + '>' +
+          '<span class="qe-shape" style="--c:var(--a' + (j + 1) + ')">' + A.shape(j) + '</span></label>') +
+        '<input class="input qe-a" data-j="' + j + '" maxlength="80" placeholder="תשובה ' + (j + 1) + '" value="' + esc(a) + '">' +
+        (f.a.length > 2 ? '<button class="icon-btn" type="button" data-action="qe-rm-ans" data-value="' + j + '" aria-label="הסרת תשובה">' + A.icon('x') + '</button>' : '') +
+        '</div>').join('') +
+      (f.a.length < 6 ? '<button class="link-btn" type="button" data-action="qe-add-ans">+ הוספת תשובה</button>' : '') +
+      '</div>' +
+      '<p class="form-error">' + (ed.error ? A.icon('alert') + esc(ed.error) : '') + '</p>' +
+      '<div class="card-actions" style="margin-top:6px">' +
+      (f.idx != null ? '<button class="btn btn-ghost" type="button" data-action="qe-cancel-edit">ביטול עריכה</button>' : '') +
+      '<button class="btn btn-primary" type="button" data-action="qe-save-item">' + A.icon('check') + (f.idx != null ? 'עדכון השאלה' : 'הוספה לרשימה') + '</button>' +
+      '</div></div>';
+
+    return '<label class="field"><span class="field-label">שם החידון</span>' +
+      '<input class="input" id="qe-title" maxlength="60" value="' + esc(ed.title) + '" placeholder="למשל: חידון חנוכה"></label>' +
+      list + form +
+      '<div class="card-actions">' +
+      '<button class="btn btn-ghost" type="button" data-action="qe-close">ביטול</button>' +
+      '<button class="btn btn-accent" type="button" data-action="qe-save-all"' + (ed.items.length ? '' : ' disabled') + '>' +
+      A.icon('check') + 'שמירת ' + ed.items.length + ' שאלות</button></div>';
   };
 
   /* r = { row, type:'question'|'survey'|null, text, answers:[], correct, valid, reason } */
