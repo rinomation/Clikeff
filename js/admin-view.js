@@ -142,7 +142,12 @@
       '<div class="segmented" role="group" aria-label="צורת המשחק" style="margin:0">' +
       '<button type="button" data-action="mode" data-value="sync" aria-pressed="' + (d.mode !== 'self') + '">כולם יחד על המקרן</button>' +
       '<button type="button" data-action="mode" data-value="self" aria-pressed="' + (d.mode === 'self') + '">כל אחד בקצב שלו</button>' +
-      '</div><span class="field-hint">' + (d.mode === 'self' ? 'כל ילד רואה את השאלות בטלפון ומתקדם לבד.' : 'השאלות מוצגות במסך שלך ועוברות לבד. הילדים רואים בטלפון רק את כפתורי התשובות.') + '</span></div>' +
+      '</div><span class="field-hint">' + (d.mode === 'self' ? 'כל ילד רואה את השאלות בטלפון ומתקדם לבד.' : 'השאלות מוצגות במסך שלך, והילדים רואים בטלפון רק את כפתורי התשובות.') + '</span></div>' +
+      (d.mode !== 'self' ? '<div class="field"><span class="field-label">מעבר בין שאלות</span>' +
+      '<div class="segmented" role="group" aria-label="מעבר בין שאלות" style="margin:0">' +
+      '<button type="button" data-action="advance" data-value="auto" aria-pressed="' + (d.advance !== 'manual') + '">אוטומטי</button>' +
+      '<button type="button" data-action="advance" data-value="manual" aria-pressed="' + (d.advance === 'manual') + '">המנחה לוחץ "הבאה"</button>' +
+      '</div><span class="field-hint">' + (d.advance === 'manual' ? 'אחרי התוצאות המשחק מחכה עד שתלחצו על "לשאלה הבאה".' : 'אחרי 8 שניות של תוצאות עוברים לבד לשאלה הבאה.') + '</span></div>' : '') +
       '<fieldset class="field" style="margin-bottom:0"><legend>מוזיקת רקע</legend><div class="tracks" role="radiogroup">' +
       V.TRACKS.map((t) =>
         '<label class="track' + (t.id === d.track ? ' is-selected' : '') + '">' +
@@ -246,8 +251,8 @@
      d = { i, total, q:{k,t,a,c}, rem, duration, answered, players, paused } */
   V.stageControls = (d) =>
     '<div class="stage-controls">' +
-    '<button class="btn btn-ghost btn-sm" type="button" data-action="sync-pause">' + A.icon(d.paused ? 'play' : 'stop') +
-    (d.paused ? 'המשך אוטומטי' : 'עצירה') + '</button>' +
+    (d.manual ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-action="sync-pause">' + A.icon(d.paused ? 'play' : 'stop') +
+    (d.paused ? 'המשך אוטומטי' : 'עצירה') + '</button>') +
     '<button class="btn btn-ghost btn-sm" type="button" data-action="sync-skip">' + A.icon('next') + 'הבא</button>' +
     '<button class="btn btn-ghost btn-sm" type="button" data-action="sync-table">' + A.icon('users') + 'טבלה</button>' +
     '<button class="btn btn-ghost btn-sm" type="button" data-action="close-room">' + A.icon('door') + 'סגירת חדר</button>' +
@@ -288,7 +293,7 @@
     return '<section class="stage">' +
       '<div class="stage-top">' +
       '<span class="pill pill-q">שאלה <b>' + (d.i + 1) + '</b> מתוך <b>' + d.total + '</b></span>' +
-      '<span class="pill pill-next">' + (d.paused ? A.icon('stop') + 'מושהה' :
+      '<span class="pill pill-next">' + (d.manual ? 'לחצו "לשאלה הבאה" כשמוכנים' : d.paused ? A.icon('stop') + 'מושהה' :
         (d.last ? 'עוד רגע — התוצאות הסופיות!' : 'השאלה הבאה תכף…')) + '</span>' +
       '</div>' +
       '<div class="stage-q small"><h2>' + esc(d.q.t) + '</h2></div>' +
@@ -306,6 +311,8 @@
           '<li>' + A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi><span class="sec">' + A.fmt(p.total) + '</span></li>').join('') +
         '</ol></div>') +
       '</div>' +
+      (d.manual ? '<div style="display:flex;justify-content:center"><button class="btn btn-accent btn-xl" type="button" data-action="sync-skip">' +
+        (d.last ? A.icon('trophy') + 'לתוצאות הסופיות' : 'לשאלה הבאה ' + A.icon('next')) + '</button></div>' : '') +
       V.stageControls(d) +
       '</section>';
   };

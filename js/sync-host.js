@@ -142,7 +142,7 @@
         Y.toReveal();
       }
     } else if (room.phase === 'reveal') {
-      if (!Y.paused && Date.now() - phaseAt > Y.REVEAL_MS) Y.next();
+      if (room.advance !== 'manual' && !Y.paused && Date.now() - phaseAt > Y.REVEAL_MS) Y.next();
     }
   }
 
