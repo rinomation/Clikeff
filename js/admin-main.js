@@ -29,6 +29,7 @@
   const H = M.handlers;
   H.onDuration = (v) => { S.cfg.duration = v; saveCfg(); };
   H.onTrack = (v) => { S.cfg.track = v; saveCfg(); };
+  H.boardEvery = (v) => { S.cfg.boardEvery = Number(v); saveCfg(); S.showSetup(); };
   H.advance = (v) => { S.cfg.advance = v; saveCfg(); S.showSetup(); };
   H.mode = (v) => { S.cfg.mode = v; saveCfg(); S.showSetup(); };
   H.source = (v) => { S.cfg.source = v; S.preview = null; saveCfg(); S.showSetup(); };
@@ -95,7 +96,7 @@
     try {
       const questions = buildQuestions();
       const code = await A.Net.createRoom({
-        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto',
+        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
         questions, qCount: questions.length, source: S.cfg.source
       });
       A.store.set('hostRoom', code);
@@ -268,6 +269,14 @@
       } else if (S.view === 'sync' && S.room.mode === 'sync' && S.room.status === 'active') {
         const r = S.room, i = r.qIndex || 0, Y = A.SyncHost;
         const st = { i, total: base.total, q: r.questions[i], paused: Y.paused, last: i + 1 >= base.total, manual: r.advance === 'manual' };
+        if (r.phase === 'board') {
+          const bk = 'b' + i + '-' + r.version + '-' + Y.paused;
+          if (M.screen === 'stageBoard' && S.boardKey === bk) return;
+          S.boardKey = bk;
+          A.Sound.fanfare();
+          M.render('stageBoard', Object.assign(st, { leaders: list.map((p) => ({ name: p.name, avatar: p.avatar, total: p.score })) }));
+          return;
+        }
         if (r.phase === 'reveal') {
           const rk = 'r' + i + '-' + r.version + '-' + Y.paused;
           if (M.screen === 'stageReveal' && S.revealKey === rk) return;

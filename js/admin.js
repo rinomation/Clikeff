@@ -13,7 +13,7 @@
     handlers: {}
   });
 
-  const STEP = { setup: 0, lobby: 1, live: 2, stage: 2, stageReveal: 2, results: 3 };
+  const STEP = { setup: 0, lobby: 1, live: 2, stage: 2, stageReveal: 2, stageBoard: 2, results: 3 };
 
   M.render = (screen, data) => {
     M.screen = screen;

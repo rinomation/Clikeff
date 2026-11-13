@@ -382,3 +382,22 @@
 .stage-controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; opacity: .75; }
 .stage-controls:hover, .stage-controls:focus-within { opacity: 1; }
 @media (max-width: 700px) { .stage-answers, .stage-answers.many { grid-template-columns: 1fr; } }
+
+/* טבלת מובילים באמצע המשחק */
+.lead-board { max-width: 980px; width: 100%; margin: 0 auto; padding: clamp(18px, 3vw, 34px); }
+.lead-title { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: clamp(1.8rem, 3.6vw, 3rem); font-weight: 700; margin-bottom: clamp(14px, 2.4vh, 26px); }
+.lead-title img { width: clamp(44px, 5vw, 64px); }
+.lead-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.lead-row {
+  display: grid; grid-template-columns: 56px 64px minmax(0, 1fr) auto; align-items: center; gap: 16px;
+  padding: 10px 20px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border);
+  animation: rise-in .6s var(--ease-bounce) both;
+}
+.lead-row.first { background: linear-gradient(135deg, #fff4cc, #ffe08a); border-color: #ffc93c; }
+:root[data-theme="dark"] .lead-row.first { background: linear-gradient(135deg, #4a3a0c, #6b5210); }
+.lr-rank { display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: var(--text-soft); }
+.lr-rank img { width: 52px; height: 52px; }
+.lead-row .avatar { width: 60px; height: 60px; background: var(--surface); }
+.lr-name { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.4rem, 2.6vw, 2.2rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lr-pts { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.3rem, 2.4vw, 2rem); color: var(--primary); font-variant-numeric: tabular-nums; }
+.lr-pts small { font-size: .55em; color: var(--text-soft); font-weight: 500; }

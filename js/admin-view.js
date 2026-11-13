@@ -143,6 +143,11 @@
       '<button type="button" data-action="mode" data-value="sync" aria-pressed="' + (d.mode !== 'self') + '">כולם יחד על המקרן</button>' +
       '<button type="button" data-action="mode" data-value="self" aria-pressed="' + (d.mode === 'self') + '">כל אחד בקצב שלו</button>' +
       '</div><span class="field-hint">' + (d.mode === 'self' ? 'כל ילד רואה את השאלות בטלפון ומתקדם לבד.' : 'השאלות מוצגות במסך שלך, והילדים רואים בטלפון רק את כפתורי התשובות.') + '</span></div>' +
+      (d.mode !== 'self' ? '<div class="field"><span class="field-label">טבלת מובילים על המקרן</span>' +
+      '<div class="segmented" role="group" aria-label="טבלת מובילים" style="margin:0;grid-template-columns:repeat(3,1fr)">' +
+      [[3, 'כל 3 שאלות'], [5, 'כל 5 שאלות'], [0, 'בלי']].map(([n, l]) =>
+        '<button type="button" data-action="boardEvery" data-value="' + n + '" aria-pressed="' + ((d.boardEvery == null ? 3 : d.boardEvery) === n) + '">' + l + '</button>').join('') +
+      '</div></div>' : '') +
       (d.mode !== 'self' ? '<div class="field"><span class="field-label">מעבר בין שאלות</span>' +
       '<div class="segmented" role="group" aria-label="מעבר בין שאלות" style="margin:0">' +
       '<button type="button" data-action="advance" data-value="auto" aria-pressed="' + (d.advance !== 'manual') + '">אוטומטי</button>' +
@@ -313,6 +318,31 @@
       '</div>' +
       (d.manual ? '<div style="display:flex;justify-content:center"><button class="btn btn-accent btn-xl" type="button" data-action="sync-skip">' +
         (d.last ? A.icon('trophy') + 'לתוצאות הסופיות' : 'לשאלה הבאה ' + A.icon('next')) + '</button></div>' : '') +
+      V.stageControls(d) +
+      '</section>';
+  };
+
+  /* ---------- מצב מקרן: טבלת מובילים באמצע המשחק ----------
+     d = { i, total, leaders:[{name,avatar,total}], manual, paused } */
+  V.stageBoard = (d) => {
+    const medals = ['1st_place_medal', '2nd_place_medal', '3rd_place_medal'];
+    const top = (d.leaders || []).slice(0, 5);
+    return '<section class="stage">' +
+      '<div class="stage-top">' +
+      '<span class="pill pill-q">אחרי <b>' + (d.i + 1) + '</b> מתוך <b>' + d.total + '</b> שאלות</span>' +
+      '<span class="pill pill-next">' + (d.manual ? 'לחצו "לשאלה הבאה" כשמוכנים' : d.paused ? 'מושהה' : 'ממשיכים תכף…') + '</span>' +
+      '</div>' +
+      '<div class="lead-board card">' +
+      '<h2 class="lead-title"><img src="' + A.img('trophy') + '" alt="">המובילים עד עכשיו</h2>' +
+      (top.length ? '<ol class="lead-rows">' + top.map((p, k) =>
+        '<li class="lead-row' + (k === 0 ? ' first' : '') + '" style="animation-delay:' + (top.length - k) * 0.25 + 's">' +
+        '<span class="lr-rank">' + (k < 3 ? '<img src="' + A.img(medals[k]) + '" alt="מקום ' + (k + 1) + '">' : k + 1) + '</span>' +
+        A.avatarHTML(p.avatar) +
+        '<bdi class="lr-name">' + esc(p.name) + '</bdi>' +
+        '<span class="lr-pts">' + A.fmt(p.total) + ' <small>נק׳</small></span></li>').join('') + '</ol>'
+        : '<p class="field-hint">עוד אין נקודות</p>') +
+      '</div>' +
+      (d.manual ? '<div style="display:flex;justify-content:center"><button class="btn btn-accent btn-xl" type="button" data-action="sync-skip">לשאלה הבאה ' + A.icon('next') + '</button></div>' : '') +
       V.stageControls(d) +
       '</section>';
   };

@@ -30,6 +30,13 @@
     } else if (room.phase === 'reveal') {
       stopLoop();
       showReveal(i);
+    } else if (room.phase === 'board') {
+      stopLoop();
+      const mine = (room.ranks || {})[A.Net.uid()];
+      if (!(P.screen === 'note' && P.data.kind === 'board' + i)) {
+        P.render('note', { kind: 'board' + i, img: 'trophy', title: 'טבלת המובילים!', tone: 'wait',
+          sub: room.showRank && mine ? 'המקום שלך: ' + mine[0] + ' · ' + A.fmt(mine[1]) + ' נקודות' : 'הסתכלו על המסך הגדול' });
+      }
     } else if (room.phase === 'end') {
       stopLoop();
       showEnd();

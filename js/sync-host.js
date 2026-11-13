@@ -95,7 +95,12 @@
 
   Y.next = () => {
     const room = ctx.room();
-    if (room.qIndex + 1 < room.questions.length) return startQuestion(room.qIndex + 1);
+    const more = room.qIndex + 1 < room.questions.length;
+    /* כל כמה שאלות: מסך מובילים לפני השאלה הבאה */
+    if (more && room.phase === 'reveal' && room.boardEvery > 0 && (room.qIndex + 1) % room.boardEvery === 0) {
+      return write({ phase: 'board' });
+    }
+    if (more) return startQuestion(room.qIndex + 1);
     A.Sound.stopMusic();
     return write({ phase: 'end' });
   };
@@ -141,7 +146,7 @@
       } else if (c.total > 0 && c.n >= c.total && Date.now() - phaseAt > 1500) {
         Y.toReveal();
       }
-    } else if (room.phase === 'reveal') {
+    } else if (room.phase === 'reveal' || room.phase === 'board') {
       if (room.advance !== 'manual' && !Y.paused && Date.now() - phaseAt > Y.REVEAL_MS) Y.next();
     }
   }
@@ -149,7 +154,7 @@
   Y.skip = () => {
     const room = ctx.room();
     if (room.phase === 'question') Y.toReveal();
-    else if (room.phase === 'reveal') Y.next();
+    else if (room.phase === 'reveal' || room.phase === 'board') Y.next();
   };
   Y.togglePause = () => { Y.paused = !Y.paused; return Y.paused; };
 })(window.App);
