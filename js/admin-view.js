@@ -43,12 +43,12 @@
     '<img class="home-logo anim-bob" src="' + A.img('light_bulb') + '" alt="">' +
     '<h1 class="home-title" dir="ltr">Clikeff</h1>' +
     '<p class="home-tag">חידון חי וחוויתי לכל הכיתה</p>' +
-    '<p class="home-sub">השאלות על המקרן, הילדים עונים מהטלפון — עם מוזיקה, שעון, קבוצות ופודיום מנצחים.</p>' +
+    '<p class="home-sub">השאלות על המקרן, הילדים עונים מהמסך שלהם — עם מוזיקה, שעון, קבוצות ופודיום מנצחים.</p>' +
     '<button class="btn btn-accent btn-xl" type="button" data-action="go-setup">' + A.icon('sparkle') + 'פתיחת חידון חדש</button>' +
     '</div>' +
     '<div class="home-feats">' +
     [['books', 'שאלות משלכם', 'כותבים בעצמכם או מעלים קובץ אקסל'],
-      ['video_game', 'כולם יחד על המקרן', 'הילדים רואים בטלפון רק את כפתורי התשובות'],
+      ['video_game', 'כולם יחד על המקרן', 'אצל הילדים מופיעים רק כפתורי התשובות'],
       ['rocket', 'המהירים ביותר', 'אחרי כל שאלה — מי ענה הכי מהר ונכון'],
       ['crown', 'משחק קבוצות', 'האריות מול הדולפינים, עם ניקוד קבוצתי'],
       ['fire', 'מוזיקה ומתח', '5 מנגינות, שעון מתקתק ופעמון'],
@@ -242,7 +242,7 @@
       '<div class="segmented" role="group" aria-label="צורת המשחק" style="margin:0">' +
       '<button type="button" data-action="mode" data-value="sync" aria-pressed="' + (d.mode !== 'self') + '">כולם יחד על המקרן</button>' +
       '<button type="button" data-action="mode" data-value="self" aria-pressed="' + (d.mode === 'self') + '">כל אחד בקצב שלו</button>' +
-      '</div><span class="field-hint">' + (d.mode === 'self' ? 'כל ילד רואה את השאלות בטלפון ומתקדם לבד.' : 'השאלות מוצגות במסך שלך, והילדים רואים בטלפון רק את כפתורי התשובות.') + '</span></div>' +
+      '</div><span class="field-hint">' + (d.mode === 'self' ? 'כל ילד רואה את השאלות במסך שלו ומתקדם לבד.' : 'השאלות מוצגות במסך שלך, ואצל הילדים מופיעים רק כפתורי התשובות.') + '</span></div>' +
       (d.mode !== 'self' ? '<div class="field"><span class="field-label">משחק קבוצות</span>' +
       '<div class="segmented" role="group" aria-label="משחק קבוצות" style="margin:0;grid-template-columns:repeat(4,1fr)">' +
       [[0, 'בלי'], [2, '2 קבוצות'], [3, '3 קבוצות'], [4, '4 קבוצות']].map(([n, l]) =>
