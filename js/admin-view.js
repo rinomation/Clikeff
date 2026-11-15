@@ -311,8 +311,8 @@
       '</div></div>' +
       '<div class="card players-panel">' +
       '<div class="players-head"><div class="player-count"><span class="big">' + d.players.length + '</span>' +
-      '<span class="lbl">משתתפים<br>הצטרפו</span></div>' +
-      '<img class="anim-bob" src="' + A.img('balloon') + '" alt="" style="width:56px"></div>' +
+      '<span class="lbl">' + (d.players.length === 1 ? 'משתתף כבר כאן' : 'משתתפים כבר כאן') + '</span></div>' +
+      '<span class="live-dot"><i></i>מחכים לעוד<span class="dots"><b>.</b><b>.</b><b>.</b></span></span></div>' +
       (d.players.length && d.teams
         ? '<div class="team-cols">' + d.teams.slice().sort((a, b) => a.i - b.i).map((t) =>
             '<div class="team-col" style="--c:' + t.color + '"><h4><img src="' + t.pic + '" alt="">' + esc(t.name) + ' <small>' + t.count + '</small></h4>' +
@@ -320,8 +320,8 @@
               '<span class="p-chip' + (p.isNew !== false ? ' is-new' : '') + '">' + A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi></span>').join('') +
             '</div></div>').join('') + '</div>'
         : d.players.length
-        ? '<div class="player-cloud">' + d.players.map((p, i) =>
-            '<span class="p-chip' + (p.offline ? ' is-off' : '') + (p.isNew !== false ? ' is-new' : '') + '" style="animation-delay:' + Math.min(i, 20) * 0.03 + 's">' +
+        ? '<div class="player-cloud bubbles">' + d.players.slice().sort((a, b) => a.name.localeCompare(b.name, 'he')).map((p, i) =>
+            '<span class="p-bub' + (p.offline ? ' is-off' : '') + (p.isNew !== false ? ' is-new' : '') + '" style="--k:' + (i % 7) + ';--ph:-' + (Date.now() / 1000 % 900).toFixed(2) + 's">' +
             A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi></span>').join('') + '</div>'
         : '<div class="empty-state"><img class="anim-bob" src="' + A.img('door') + '" alt="">' +
           '<b>מחכים למשתתפים הראשונים…</b><span>השמות יופיעו כאן ברגע שיצטרפו</span></div>') +
@@ -400,8 +400,11 @@
         '</div>';
     }).join('') + '</div>';
 
+  V.qDots = (i, total) => total > 30 ? '' :
+    '<div class="q-dots" aria-hidden="true">' + Array.from({ length: total }, (_, k) => '<i class="' + (k < i ? 'done' : k === i ? 'now' : '') + '"></i>').join('') + '</div>';
+
   V.stage = (d) =>
-    '<section class="stage">' +
+    '<section class="stage">' + V.qDots(d.i, d.total) +
     '<div class="stage-top">' +
     '<span class="pill pill-q">שאלה <b>' + (d.i + 1) + '</b> מתוך <b>' + d.total + '</b></span>' +
     '<span class="stage-clock" id="stage-clock" style="--p:' + (d.rem / d.duration) + '"><span id="stage-sec">' + Math.ceil(d.rem) + '</span></span>' +
@@ -455,7 +458,7 @@
     return '<section class="stage">' +
       '<div class="stage-top">' +
       '<span class="pill pill-q">אחרי <b>' + (d.i + 1) + '</b> מתוך <b>' + d.total + '</b> שאלות</span>' +
-      '<span class="pill pill-next">' + (d.manual ? 'לחצו "לשאלה הבאה" כשמוכנים' : d.paused ? 'מושהה' : 'ממשיכים תכף…') + '</span>' +
+      '<span class="pill pill-next">' + (d.manual ? 'לחצו "לשאלה הבאה" כשמוכנים' : d.paused ? 'מושהה' : 'תכף ממשיכים…') + '</span>' +
       '</div>' +
       '<div class="lead-board card">' +
       '<h2 class="lead-title"><img src="' + A.img('trophy') + '" alt="">המובילים עד עכשיו</h2>' +
@@ -494,13 +497,13 @@
     const blocks = ['1st_place_medal', '2nd_place_medal', '3rd_place_medal'];
     return (
       '<section class="admin-main">' +
-      '<div class="results-hero"><h2>🎉 והמנצחים הם…</h2></div>' +
+      '<div class="results-hero"><h2><span>ו</span><span>ה</span><span>מ</span><span>נ</span><span>צ</span><span>ח</span><span>י</span><span>ם</span>&nbsp;<span>ה</span><span>ם</span><span>…</span></h2></div>' +
       (d.teams && d.teams.length ? '<div class="team-win card" style="--c:' + d.teams[0].color + '"><img src="' + d.teams[0].pic + '" alt="">' +
         '<div><small>הקבוצה המנצחת</small><b>' + esc(d.teams[0].name) + '</b></div></div>' + A.Teams.bars(d.teams) : '') +
       '<div class="podium">' +
       top.map((p, i) =>
-        '<div class="place p' + (i + 1) + '">' + A.avatarHTML(p.avatar) +
-        '<span class="p-name"><bdi>' + esc(p.name) + '</bdi></span><span class="p-score">' + A.fmt(p.score) + ' נק׳</span>' +
+        '<div class="place p' + (i + 1) + '">' + (i === 0 ? '<img class="crown" src="' + A.img('crown') + '" alt="">' : '') + A.avatarHTML(p.avatar) +
+        '<span class="p-name"><bdi>' + esc(p.name) + '</bdi></span><span class="p-score"><b class="count" data-to="' + (p.score || 0) + '">0</b> נק׳</span>' +
         '<div class="block"><img src="' + A.img(blocks[i]) + '" alt="מקום ' + (i + 1) + '"></div></div>').join('') +
       '</div>' +
       '<div class="controls" style="justify-content:center;margin-bottom:24px">' +

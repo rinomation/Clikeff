@@ -22,6 +22,7 @@
     const body = V[screen](M.data);
     $('#app').innerHTML = V.header({ step: STEP[screen], muted: M.muted }) + body;
     if (screen === 'setup') bindSetup();
+    if (screen === 'results') A.$$('.podium .count').forEach((el, k) => setTimeout(() => A.countUp(el, Number(el.dataset.to) || 0, { ms: 1200 }), [1300, 1100, 900][k] || 900));
   };
 
   function bindSetup() {

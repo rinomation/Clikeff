@@ -325,17 +325,39 @@
   }
 
   const seen = new Set();
+  let primed = false;
+  const flashQ = [];
+  let flashing = false;
+  function flashJoin(p) {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    flashQ.push(p);
+    if (!flashing) nextFlash();
+  }
+  function nextFlash() {
+    const p = flashQ.shift();
+    if (!p) { flashing = false; return; }
+    flashing = true;
+    const el = document.createElement('div');
+    el.className = 'join-flash'; el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = A.avatarHTML(p.avatar) + '<b><bdi>' + A.esc(p.name) + '</bdi> כאן!</b>';
+    document.body.appendChild(el);
+    A.Sound.pop();
+    setTimeout(() => el.remove(), 1800);
+    setTimeout(nextFlash, flashQ.length > 3 ? 450 : 1000);
+  }
   function players() {
+    const lobbyNow = primed && S.room && S.room.status === 'waiting';
     const v = S.room ? S.room.version : 0;
     const now = Date.now();
     const sync = S.room && S.room.mode === 'sync';
     const tot = sync && S.room.qStarts ? A.SyncHost.totals(S.room, S.players,
       S.room.phase === 'question' ? S.room.qIndex - 1 : S.room.qIndex) : null;
-    return S.players.map((p) => {
+    const out = S.players.map((p) => {
       const cur = p.version === v;
       if (sync) {
         const fresh = !seen.has(p.id);
         seen.add(p.id);
+        if (fresh && lobbyNow) flashJoin(p);
         return {
           id: p.id, name: p.name, avatar: p.avatar, nameKey: p.nameKey, isNew: fresh,
           score: tot && cur ? tot[p.id] || 0 : 0, answered: cur ? Object.keys(p.answers || {}).length : 0,
@@ -345,6 +367,7 @@
       const ls = p.lastSeen && p.lastSeen.toMillis ? p.lastSeen.toMillis() : now;
       const isNew = !seen.has(p.id);
       seen.add(p.id);
+      if (isNew && lobbyNow) flashJoin(p);
       return {
         id: p.id, name: p.name, avatar: p.avatar, nameKey: p.nameKey, isNew,
         score: cur ? p.score || 0 : 0, answered: cur ? p.answered || 0 : 0,
@@ -352,6 +375,8 @@
         offline: p.online === false || now - ls > 75000
       };
     }).sort((a, b) => b.score - a.score || b.answered - a.answered || a.name.localeCompare(b.name, 'he'));
+    primed = true;
+    return out;
   }
 
   function surveys(list) {
@@ -409,6 +434,10 @@
       if (S.view === 'lobby') {
         M.render('lobby', Object.assign(base, { qCount: base.total, duration: S.room.duration, track: S.room.track }));
       } else if (S.view === 'results') {
+        /* מציירים מחדש רק כשהתוצאות עצמן השתנו, כדי שהפודיום לא יתחיל מההתחלה */
+        const rk = JSON.stringify([list.slice(0, 3).map((p) => [p.id, p.score, p.avatar]), (base.teams || []).map((t) => [t.name, t.avg])]);
+        if (M.screen === 'results' && S.resultsKey === rk) return;
+        S.resultsKey = rk;
         M.render('results', base);
       } else if (S.view === 'sync' && S.room.mode === 'sync' && S.room.status === 'active') {
         const r = S.room, i = r.qIndex || 0, Y = A.SyncHost;
