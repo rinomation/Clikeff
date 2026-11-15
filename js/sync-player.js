@@ -9,7 +9,8 @@
   const save = () => A.store.set(key(), Z.st);
 
   function load() {
-    Z.st = A.store.get(key(), null) || { ans: {}, seen: {}, shown: {} };
+    Z.st = A.store.get(key(), null) || { ans: {}, seen: {}, shown: {}, res: {} };
+    if (!Z.st.res) Z.st.res = {};
   }
 
   /** נקרא מ-player-main בכל עדכון של החדר במצב מקרן */
@@ -23,6 +24,7 @@
     if (room.phase === 'question') {
       if (!Z.st.seen[i]) { Z.st.seen[i] = Date.now(); save(); }
       if (Z.st.ans[i] != null) return showSent();
+      if (remaining() <= 0) return showTimeUp(i); /* הזמן שלו נגמר: לא חוזרים לכפתורים */
       if (P.screen === 'pad' && P.data.i === i) return;
       P.render('pad', { i, total: room.questions.length, answers: room.questions[i].a,
         survey: room.questions[i].k === 's', rem: remaining(), duration: room.duration,
@@ -61,7 +63,7 @@
       if (bar) { bar.style.setProperty('--p', rem / Z.room.duration); bar.classList.toggle('is-urgent', rem <= 5); }
       if (rem <= 0) {
         stopLoop();
-        P.render('note', { img: 'alarm_clock', title: 'הזמן נגמר', sub: 'מחכים לתוצאות על המסך הגדול…', tone: 'wait' });
+        showTimeUp(Z.room.qIndex || 0);
       }
     }, 200);
   }
@@ -80,6 +82,12 @@
     });
   };
 
+  function showTimeUp(i) {
+    if (P.screen === 'note' && P.data.kind === 'late' + i) return;
+    stopLoop();
+    P.render('note', { kind: 'late' + i, img: 'alarm_clock', title: 'הזמן נגמר', sub: 'מחכים לתוצאות על המסך הגדול…', tone: 'wait' });
+  }
+
   function showSent() {
     if (P.screen === 'note' && P.data.kind === 'sent') return;
     P.render('note', { kind: 'sent', img: 'check_mark_button', title: 'התשובה נקלטה!', sub: 'מחכים לשאר המשתתפים…', tone: 'wait' });
@@ -97,11 +105,16 @@
     else if (mine[3] === 1) d = { img: 'party_popper', title: 'תשובה נכונה!', tone: 'ok', points: mine[0], total: mine[1], rank };
     else if (mine[3] === 0) d = { img: 'thinking_face', title: 'לא נורא!', sub: 'התשובה הנכונה: ' + q.a[q.c], tone: 'bad', points: 0, total: mine[1], rank };
     else d = { img: 'alarm_clock', title: 'לא הספקת לענות', sub: 'התשובה הנכונה: ' + q.a[q.c], tone: 'bad', points: 0, total: mine[1], rank };
+    if (q.k !== 's') { Z.st.res[i] = mine[3] === 1 ? 1 : 0; save(); }
+    if (mine[3] === 1) { let n = 0; for (let k = i; k >= 0 && Z.st.res[k] === 1; k--) n++; d.streak = n; }
     d.kind = sig;
     P.render('note', d);
-    if (!Z.st.shown[i]) {
+    const first = !Z.st.shown[i];
+    A.countUp(A.$('.pad-note .stat-chip b'), d.points || 0, { prefix: '+', ms: 900 });
+    if (first) {
       Z.st.shown[i] = 1; save();
       if (q.k !== 's') (mine[3] === 1 ? A.Sound.correct : A.Sound.wrong)();
+      if (mine[3] === 1 && window.confetti) window.confetti({ particleCount: d.streak >= 3 ? 110 : 60, spread: 70, origin: { y: .35 }, colors: ['#2ee6ff', '#ff5a5f', '#ffb020', '#14c49a', '#ffffff'] });
     }
   }
 

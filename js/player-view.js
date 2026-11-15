@@ -153,6 +153,7 @@
     '<img class="done-trophy" src="' + A.img(d.img) + '" alt="">' +
     '<h2 class="done-title">' + esc(d.title) + '</h2>' +
     (d.sub ? '<p class="done-sub">' + esc(d.sub) + '</p>' : '') +
+    (d.streak >= 2 ? '<div class="streak"><img src="' + A.img('fire') + '" alt=""><b>' + d.streak + '</b> ברצף!</div>' : '') +
     (d.points != null ? '<div class="done-stats"><div class="stat-chip"><b>+' + A.fmt(d.points) + '</b><span>נקודות בשאלה</span></div>' +
       (d.total != null ? '<div class="stat-chip"><b>' + A.fmt(d.total) + '</b><span>סך הכול</span></div>' : '') +
       (d.rank ? '<div class="stat-chip"><b>' + d.rank + '</b><span>מקום</span></div>' : '') + '</div>' : '') +

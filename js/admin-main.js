@@ -262,8 +262,23 @@
     S.showHome();
   }
 
-  H.start = () => (S.room && S.room.mode === 'sync' ? A.SyncHost.start() : A.Net.updateRoom(S.code, { status: 'active', startedAt: A.FsRest.NOW }))
+  const go = () => (S.room && S.room.mode === 'sync' ? A.SyncHost.start() : A.Net.updateRoom(S.code, { status: 'active', startedAt: A.FsRest.NOW }))
     .catch((e) => A.toast(A.Net.errorText(e), { type: 'bad' }));
+  let counting = false;
+  H.start = () => {
+    if (counting) return;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return go();
+    counting = true;
+    const ov = document.createElement('div');
+    ov.className = 'countdown'; ov.setAttribute('aria-live', 'assertive');
+    document.body.appendChild(ov);
+    const steps = ['3', '2', '1', 'יאללה!'];
+    steps.forEach((t, k) => setTimeout(() => {
+      ov.innerHTML = '<i></i><b class="' + (k === 3 ? 'go' : '') + '">' + t + '</b>';
+      if (k < 3) A.Sound.beep(k === 2); else A.Sound.pop();
+    }, k * 900));
+    setTimeout(() => { ov.classList.add('out'); setTimeout(() => ov.remove(), 350); counting = false; go(); }, steps.length * 900);
+  };
 
   H.reset = () => {
     const patch = { status: 'waiting', startedAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null };

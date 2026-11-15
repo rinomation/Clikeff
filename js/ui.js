@@ -114,6 +114,20 @@ window.App = window.App || {};
       '</svg>';
   };
 
+  /* ---------- מספר שעולה בהדרגה (למשל +155) ---------- */
+  A.countUp = (el, to, opts) => {
+    if (!el) return;
+    opts = opts || {};
+    const pre = opts.prefix || '', ms = opts.ms || 900, t0 = performance.now();
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = pre + A.fmt(to); return; }
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / ms);
+      el.textContent = pre + A.fmt(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
   /* ---------- "קליק": גל קטן בכל לחיצה ---------- */
   A.mountClicks = () => {
     if (A._clicks || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
