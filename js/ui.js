@@ -94,6 +94,37 @@ window.App = window.App || {};
   A.SHAPE_NAMES = ['משולש', 'מעוין', 'עיגול', 'ריבוע', 'כוכב', 'משושה'];
   A.shape = (i) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + SHAPES[i % SHAPES.length] + '</svg>';
 
+  /* ---------- הלוגו (SVG). big=true: עם אנימציית "קליק" שחוזרת ---------- */
+  A.logo = (cls, big) => {
+    const L = [['C', 170], ['l', 290], ['ı', 349], ['k', 394], ['e', 486], ['f', 588], ['f', 659]];
+    return '<svg class="logo ' + (cls || '') + (big ? ' logo-anim' : '') + '" viewBox="140 0 620 290" role="img" aria-label="Clikeff">' +
+      '<g class="lg-letters" font-family="Fredoka, Rubik, sans-serif" font-weight="700" font-size="190" fill="currentColor" direction="ltr">' +
+      L.map((l, k) => '<text class="lt" x="' + l[1] + '" y="225" style="--k:' + k + '">' + l[0] + '</text>').join('') + '</g>' +
+      (big ? '<g class="lg-sparks" stroke="#2ee6ff" stroke-width="6" stroke-linecap="round">' +
+        '<line x1="384" y1="20" x2="384" y2="6"/><line x1="384" y1="124" x2="384" y2="138"/>' +
+        '<line x1="332" y1="72" x2="318" y2="72"/><line x1="436" y1="72" x2="450" y2="72"/>' +
+        '<line x1="347" y1="35" x2="337" y2="25" stroke="#ff5a5f"/><line x1="421" y1="35" x2="431" y2="25" stroke="#ffb020"/>' +
+        '<line x1="347" y1="109" x2="337" y2="119" stroke="#ffb020"/><line x1="421" y1="109" x2="431" y2="119" stroke="#ff5a5f"/></g>' +
+        '<circle class="lg-burst b1" cx="384" cy="72" r="20" fill="none" stroke="#2ee6ff" stroke-width="5"/>' +
+        '<circle class="lg-burst b2" cx="384" cy="72" r="20" fill="none" stroke="#fff" stroke-width="3"/>' : '') +
+      '<circle class="lg-ring r2" cx="384" cy="72" r="46" fill="none" stroke="#2ee6ff" stroke-width="5" opacity=".35"/>' +
+      '<circle class="lg-ring r1" cx="384" cy="72" r="31" fill="none" stroke="#2ee6ff" stroke-width="6" opacity=".7"/>' +
+      '<circle class="lg-dot" cx="384" cy="72" r="17" fill="#2ee6ff"/>' +
+      '<path class="lg-cursor" d="M404 92 l38 92 l12 -36 l36 -12z" fill="#ff5a5f" stroke="#06142b" stroke-width="7" stroke-linejoin="round"/>' +
+      '</svg>';
+  };
+
+  /* ---------- "קליק": גל קטן בכל לחיצה ---------- */
+  A.mountClicks = () => {
+    if (A._clicks || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    A._clicks = true;
+    document.addEventListener('pointerdown', (e) => {
+      const r = document.createElement('i');
+      r.className = 'click-ring'; r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
+      document.body.appendChild(r); setTimeout(() => r.remove(), 600);
+    }, { passive: true });
+  };
+
   /* ---------- רקע מעוטר ---------- */
   A.mountDeco = () => {
     if (A.$('.bg-deco')) return;
@@ -104,6 +135,7 @@ window.App = window.App || {};
       '<span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>' +
       [0, 1, 2, 3, 4].map((i) => '<span class="shape s' + (i + 1) + '">' + A.shape(i) + '</span>').join('');
     document.body.prepend(d);
+    A.mountClicks();
   };
 
   /* ---------- הודעות קופצות ---------- */

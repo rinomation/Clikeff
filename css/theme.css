@@ -447,3 +447,34 @@ bdi { unicode-bidi: isolate; }
     transition-duration: .001ms !important;
   }
 }
+
+/* ---------- סיסמה: "לוחצים, נהנים, משחקים!" — מילה אחרי מילה ---------- */
+.tagline {
+  margin: 4px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: .1em .38em;
+  font-family: var(--font-display); font-weight: 900; font-size: clamp(1.7rem, 4.2vw, 2.7rem); line-height: 1.15;
+}
+.tagline span {
+  position: relative; display: inline-block; opacity: 0;
+  animation: tag-in .75s var(--ease-bounce) forwards, tag-beat 4.8s ease-in-out infinite;
+  animation-delay: calc(.25s + var(--i) * .5s), calc(2.4s + var(--i) * .42s);
+}
+.tagline span:nth-child(1) { color: var(--primary); }
+.tagline span:nth-child(2) { color: var(--a3); }
+.tagline span:nth-child(3) { color: var(--accent); }
+/* "קליק": גל שמתפשט מאחורי כל מילה כשהיא נוחתת */
+.tagline span::after {
+  content: ""; position: absolute; inset: 50% auto auto 50%; width: 1.4em; height: 1.4em; margin: -.7em 0 0 -.7em;
+  border-radius: 50%; border: .09em solid currentColor; opacity: 0; pointer-events: none;
+  animation: tag-ring .8s ease-out forwards; animation-delay: calc(.4s + var(--i) * .5s);
+}
+@keyframes tag-in {
+  0% { opacity: 0; transform: translateY(.7em) scale(.35) rotate(-10deg); }
+  55% { opacity: 1; transform: translateY(-.12em) scale(1.15) rotate(4deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes tag-ring { 0% { opacity: .7; transform: scale(.3); } 100% { opacity: 0; transform: scale(2.6); } }
+@keyframes tag-beat { 0%, 14%, 100% { transform: none; } 7% { transform: translateY(-.1em) scale(1.12) rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .tagline span { opacity: 1; animation: none; }
+  .tagline span::after { display: none; }
+}

@@ -34,6 +34,14 @@
   H.onTrack = (v) => { S.cfg.track = v; saveCfg(); };
   H.boardEvery = (v) => { S.cfg.boardEvery = Number(v); saveCfg(); S.showSetup(); };
   H.teams = (v) => { S.cfg.teams = Number(v); saveCfg(); S.showSetup(); };
+  H.teamSet = (v) => { S.cfg.teamSet = v; saveCfg(); S.showSetup(); };
+  H.onTeamName = (i, v) => {
+    const list = (S.cfg.teamNames || []).slice();
+    list[i] = A.Teams.clean(v);
+    S.cfg.teamNames = list; saveCfg();
+    const sum = document.getElementById('setup-summary');
+    if (sum) sum.innerHTML = '<span class="lb-title">סיכום:</span>' + A.AdminView.summary(setupData());
+  };
   H.advance = (v) => { S.cfg.advance = v; saveCfg(); S.showSetup(); };
   H['go-setup'] = () => { S.tab = 'questions'; S.showSetup(); window.scrollTo(0, 0); };
   H.tab = (v) => { S.tab = v; S.showSetup(); window.scrollTo(0, 0); };
@@ -123,7 +131,7 @@
     let last = a.length - 1; while (last >= 0 && !a[last]) last--;
     const ans = a.slice(0, last + 1);
     ed.error = !t ? 'צריך לכתוב את השאלה'
-      : ans.indexOf('') >= 0 ? 'יש תשובה ריקה באמצע — מלאו אותה או הסירו אותה'
+      : ans.indexOf('') >= 0 ? 'יש תשובה ריקה באמצע. מלאו אותה או הסירו אותה'
       : ans.length < 2 ? 'צריך לפחות שתי תשובות'
       : f.k === 'q' && (f.c == null || f.c >= ans.length) ? 'סמנו איזו תשובה נכונה (לחיצה על הצורה הצבעונית)'
       : '';
@@ -195,7 +203,7 @@
     try {
       const questions = buildQuestions();
       const code = await A.Net.createRoom({
-        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {}, boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
+        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {}, teamSet: S.cfg.teamSet || A.Teams.DEFAULT, teamNames: A.Teams.names(S.cfg), boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
         questions, qCount: questions.length, source: S.cfg.source
       });
       A.store.set('hostRoom', code);
@@ -261,7 +269,7 @@
     const patch = { status: 'waiting', startedAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null };
     if (S.room && S.room.source !== 'file') { patch.questions = A.pickBank(10); patch.qCount = 10; }
     A.Net.bumpRoom(S.code, patch)
-      .then(() => A.toast('הסבב אופס — כולם חזרו להמתנה', { img: 'hourglass_not_done' }))
+      .then(() => A.toast('הסבב אופס, כולם חזרו להמתנה', { img: 'hourglass_not_done' }))
       .catch((e) => A.toast(A.Net.errorText(e), { type: 'bad' }));
   };
 

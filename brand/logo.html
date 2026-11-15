@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clikeff — הלוגו</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Rubik', system-ui, sans-serif; color: #eaf3ff; background: #040d1d; padding: 40px 16px 60px; }
+  h1 { text-align: center; font-weight: 800; margin: 0 0 32px; font-size: 1.8rem; }
+  .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 20px; }
+  .stage { border-radius: 22px; padding: 30px; display: grid; align-items: center; min-width: 0; }
+  .wrap > .stage svg { max-width: 760px; margin: 0 auto; }
+  .dark { background: radial-gradient(90% 100% at 30% 100%, #0f3266, #06142b 70%); }
+  .light { background: #fff; }
+  .row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; }
+  .icons { display: flex; gap: 22px; align-items: end; justify-content: center; flex-wrap: wrap; }
+  .icons svg { width: auto; }
+  svg { width: 100%; height: auto; display: block; }
+  @media (max-width: 700px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<h1>הלוגו הסופי</h1>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="logo">
+      <text x="450" y="225" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="190" style="fill: var(--word, #fff)" direction="ltr">Clıkeff</text>
+      <circle cx="384" cy="72" r="46" fill="none" style="stroke: var(--ring, #2ee6ff)" stroke-width="5" opacity=".35"/>
+      <circle cx="384" cy="72" r="31" fill="none" style="stroke: var(--ring, #2ee6ff)" stroke-width="6" opacity=".7"/>
+      <circle cx="384" cy="72" r="17" style="fill: var(--ring, #2ee6ff)"/>
+      <path d="M404 92 l38 92 l12 -36 l36 -12z" style="fill: #ff5a5f; stroke: var(--edge, #06142b)" stroke-width="7" stroke-linejoin="round"/>
+      <text x="450" y="300" text-anchor="middle" font-family="Rubik" font-weight="800" font-size="32" style="fill: var(--tag, #2ee6ff)">לוחצים, נהנים, משחקים!</text>
+    </g>
+    <g id="mark">
+      <rect width="120" height="120" rx="30" fill="#06142b"/>
+      <circle cx="52" cy="50" r="34" fill="none" stroke="#2ee6ff" stroke-width="4" opacity=".35"/>
+      <circle cx="52" cy="50" r="23" fill="none" stroke="#2ee6ff" stroke-width="5" opacity=".7"/>
+      <circle cx="52" cy="50" r="12" fill="#2ee6ff"/>
+      <path d="M64 62 l22 52 l7 -20 l20 -7z" fill="#ff5a5f" stroke="#06142b" stroke-width="5" stroke-linejoin="round"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <div class="stage dark"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+  <div class="row">
+    <div class="stage light" style="--word:#06142b; --tag:#0a7ea8; --ring:#12b8e0; --edge:#fff"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+    <div class="stage dark icons">
+      <svg viewBox="0 0 120 120" style="height:120px"><use href="#mark"/></svg>
+      <svg viewBox="0 0 120 120" style="height:64px"><use href="#mark"/></svg>
+      <svg viewBox="0 0 120 120" style="height:32px"><use href="#mark"/></svg>
+    </div>
+  </div>
+</div>
+</body>
+</html>

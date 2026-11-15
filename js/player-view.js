@@ -23,9 +23,8 @@
     return (
       '<section class="screen screen-join">' +
       '<div class="brand">' +
-      '<img class="brand-icon anim-bob" src="' + A.img('light_bulb') + '" alt="">' +
-      '<h1 class="brand-name" dir="ltr">Clikeff</h1>' +
-      '<p class="brand-tag">חידון חי לכל הכיתה</p>' +
+      '<h1 class="brand-name">' + A.logo('logo-lg', true) + '</h1>' +
+      '<p class="tagline" aria-label="לוחצים, נהנים, משחקים!"><span style="--i:0">לוחצים,</span> <span style="--i:1">נהנים,</span> <span style="--i:2">משחקים!</span></p>' +
       '</div>' +
       '<form class="card join-card" id="join-form" novalidate autocomplete="off">' +
       '<label class="field"><span class="field-label">קוד משחק</span>' +
@@ -45,7 +44,7 @@
       '<button class="btn btn-accent btn-lg btn-block" type="submit"' + (d.busy ? ' disabled' : '') + '>' +
       (d.busy ? '<span class="spinner"></span> מתחברים…' : 'יאללה, מצטרפים!') + '</button>' +
       '</form>' +
-      '<p class="join-foot">רק שם וקוד — בלי הרשמה ובלי אימייל</p>' +
+      '<p class="join-foot">רק שם וקוד. בלי הרשמה ובלי מייל.</p>' +
       '</section>'
     );
   };
@@ -57,7 +56,7 @@
     '<span class="disc"><img src="' + A.img(A.safeAvatar(d.avatar)) + '" alt=""></span></div>' +
     '<h2 class="wait-hello">היי <bdi>' + esc(d.name) + '</bdi>!</h2>' +
     '<p class="wait-room">נכנסת למשחק <bdi dir="ltr">' + esc(A.prettyCode(d.code)) + '</bdi></p>' +
-    (d.team ? '<div class="team-badge" style="--c:' + d.team.color + '"><img src="' + A.img(d.team.img) + '" alt="">בקבוצת <b>' + esc(d.team.name) + '</b></div>' : '') +
+    (d.team ? '<div class="team-badge" style="--c:' + d.team.color + '"><img src="' + d.team.pic + '" alt="">בקבוצת <b>' + esc(d.team.name) + '</b></div>' : '') +
     '<div class="wait-status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>' +
     (d.message ? esc(d.message) : 'מחכים שהמנחה יתחיל') + '</div>' +
     '<p class="wait-hint">המשחק יתחיל לבד ברגע שהמנחה ילחץ "התחל". כדאי להגביר את הצליל 🔊</p>' +
@@ -136,12 +135,12 @@
     '<section class="screen screen-game screen-pad">' +
     '<header class="game-top">' +
     '<span class="pill pill-counter">שאלה <b>' + (d.i + 1) + '</b> מתוך <b>' + d.total + '</b></span>' +
-    (d.team ? '<span class="pill team-pill" style="--c:' + d.team.color + '"><img src="' + A.img(d.team.img) + '" alt="">' + esc(d.team.name) + '</span>' : '') +
+    (d.team ? '<span class="pill team-pill" style="--c:' + d.team.color + '"><img src="' + d.team.pic + '" alt="">' + esc(d.team.name) + '</span>' : '') +
     '<span class="spacer"></span>' +
     '<span class="time-num" aria-live="off">' + A.icon('clock') + '<span id="time-left">' + Math.ceil(d.rem) + '</span></span>' +
     V.muteBtn(d.muted) + '</header>' +
     '<div class="timebar" id="timebar" style="--p:' + (d.rem / d.duration) + '"><div class="timebar-fill"></div></div>' +
-    '<p class="pad-hint">' + (d.survey ? '📊 סקר — בחרו את מה שמתאים לכם' : 'הסתכלו על המסך הגדול ובחרו תשובה') + '</p>' +
+    '<p class="pad-hint">' + (d.survey ? '📊 סקר: בחרו את מה שמתאים לכם' : 'הסתכלו על המסך הגדול ובחרו תשובה') + '</p>' +
     '<div class="answers pad-answers' + (d.answers.length > 4 ? ' cols-1' : '') + '">' +
     d.answers.map((txt, j) =>
       '<button type="button" class="answer" data-answer="' + j + '" aria-label="' + A.SHAPE_NAMES[j % 6] + ': ' + esc(txt) + '">' +
@@ -177,7 +176,7 @@
     '<section class="screen screen-done">' +
     '<img class="done-trophy" src="' + A.img(d.rank && d.rank <= 3 ? ['1st_place_medal', '2nd_place_medal', '3rd_place_medal'][d.rank - 1] : 'trophy') + '" alt="">' +
     '<h2 class="done-title">כל הכבוד, <bdi>' + esc(d.name) + '</bdi>!</h2>' +
-    '<p class="done-sub">' + esc(d.message || 'המשחק הסתיים עבורך. התוצאות אצל המנחה — הקשיבו להודעה!') + '</p>' +
+    '<p class="done-sub">' + esc(d.message || 'המשחק נגמר בשבילך. התוצאות אצל המנחה, אז הקשיבו להודעה!') + '</p>' +
     '<div class="done-stats">' +
     '<div class="stat-chip"><b>' + d.answered + '/' + d.total + '</b><span>שאלות שנענו</span></div>' +
     '</div>' +

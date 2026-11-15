@@ -20,8 +20,8 @@
   /* ---------- כותרת ---------- */
   V.header = (d) =>
     '<header class="admin-top">' +
-    '<a class="admin-brand" href="admin.html"><img src="' + A.img('light_bulb') + '" alt="">' +
-    '<h1><span dir="ltr">Clikeff</span><small>לוח המנחה</small></h1></a>' +
+    '<a class="admin-brand" href="admin.html">' + A.logo('logo-sm') +
+    '<h1><span class="sr-only">Clikeff</span><small>לוח המנחה</small></h1></a>' +
     '<span class="spacer"></span>' +
     '<nav class="steps" aria-label="שלבי המשחק">' +
     STEPS.map((s, i) => '<span class="' + (i < d.step ? 'is-done' : i === d.step ? 'is-current' : '') + '"' +
@@ -40,20 +40,15 @@
   V.home = () =>
     '<section class="home">' +
     '<div class="home-hero">' +
-    '<img class="home-logo anim-bob" src="' + A.img('light_bulb') + '" alt="">' +
-    '<h1 class="home-title" dir="ltr">Clikeff</h1>' +
-    '<p class="home-tag">חידון חי וחוויתי לכל הכיתה</p>' +
-    '<p class="home-sub">השאלות על המקרן, הילדים עונים מהמסך שלהם — עם מוזיקה, שעון, קבוצות ופודיום מנצחים.</p>' +
+    '<h1 class="home-title">' + A.logo('logo-xl', true) + '</h1>' +
+    '<p class="tagline" aria-label="לוחצים, נהנים, משחקים!"><span style="--i:0">לוחצים,</span> <span style="--i:1">נהנים,</span> <span style="--i:2">משחקים!</span></p>' +
+    '<p class="home-sub">השאלה עולה על המסך הגדול, וכל אחד עונה בלחיצה מהמכשיר שלו.</p>' +
     '<button class="btn btn-accent btn-xl" type="button" data-action="go-setup">' + A.icon('sparkle') + 'פתיחת חידון חדש</button>' +
     '</div>' +
-    '<div class="home-feats">' +
-    [['books', 'שאלות משלכם', 'כותבים בעצמכם או מעלים קובץ אקסל'],
-      ['video_game', 'כולם יחד על המקרן', 'אצל הילדים מופיעים רק כפתורי התשובות'],
-      ['rocket', 'המהירים ביותר', 'אחרי כל שאלה — מי ענה הכי מהר ונכון'],
-      ['crown', 'משחק קבוצות', 'האריות מול הדולפינים, עם ניקוד קבוצתי'],
-      ['fire', 'מוזיקה ומתח', '5 מנגינות, שעון מתקתק ופעמון'],
-      ['trophy', 'פודיום מנצחים', 'טבלת מובילים וקונפטי בסוף']
-    ].map((f) => '<div class="home-feat"><img src="' + A.img(f[0]) + '" alt=""><b>' + f[1] + '</b><span>' + f[2] + '</span></div>').join('') +
+    '<div class="tapes" aria-hidden="true">' +
+    [['פרשת השבוע', 'חנוכה', 'הלכות שבת', 'לוח הכפל', 'משניות', 'ארץ ישראל', 'ברכות', 'חזרה למבחן'],
+      ['חגים ומועדים', 'נביאים', 'גדולי ישראל', 'מגילת אסתר', 'דקדוק', 'חשבון', 'בעלי חיים', 'מסיבת סיום']
+    ].map((row, k) => { const t = row.map((w) => '<span>' + w + '</span>').join(''); return '<div class="tape tape-' + (k ? 'b' : 'a') + '"><div class="tape-row">' + t + t + '</div></div>'; }).join('') +
     '</div></section>';
 
   /* ---------- הכנה: שני שלבים בלשוניות ---------- */
@@ -68,7 +63,7 @@
     ];
     if (sync) {
       items.push(['hourglass_not_done', d.advance === 'manual' ? 'מעבר בלחיצה' : 'מעבר אוטומטי']);
-      items.push(['crown', d.teams ? '<b>' + d.teams + '</b> קבוצות' : 'בלי קבוצות']);
+      items.push(['crown', d.teams ? '<b>' + d.teams + '</b> קבוצות: ' + esc(A.Teams.names(d).slice(0, d.teams).join(', ')) : 'בלי קבוצות']);
       items.push(['trophy', d.boardEvery === 0 ? 'בלי טבלת מובילים' : 'מובילים כל <b>' + (d.boardEvery || 3) + '</b>']);
     }
     items.push([t.img, esc(t.name)]);
@@ -76,12 +71,29 @@
     return items.map((x) => '<span class="pill"><img src="' + A.img(x[0]) + '" alt="">' + x[1] + '</span>').join('');
   };
 
+  /* שמות הקבוצות: רשימה מוכנה או שמות משלי */
+  V.teamNamesField = (d) => {
+    const T = A.Teams, cur = d.teamSet || T.DEFAULT, n = d.teams || 0;
+    const names = T.names(d).slice(0, n);
+    const room = { teamSet: cur, teamNames: names };
+    return '<div class="field"><span class="field-label">שמות הקבוצות</span>' +
+      '<div class="team-sets" role="group" aria-label="שמות הקבוצות">' + T.SETS.map((s) =>
+        '<button type="button" class="chip" data-action="teamSet" data-value="' + s.id + '" aria-pressed="' + (cur === s.id) + '">' + esc(s.label) + '</button>').join('') + '</div>' +
+      (cur === 'custom'
+        ? '<div class="team-inputs">' + names.map((nm, i) => { const t = T.get(i, room);
+            return '<label class="team-input" style="--c:' + t.color + '"><img src="' + t.pic + '" alt=""><input class="input" data-team-name="' + i + '" maxlength="' + T.MAX_NAME + '" placeholder="' + esc(T.SETS[0].names[i]) + '" value="' + esc(((d.teamNames || [])[i]) || '') + '" aria-label="שם קבוצה ' + (i + 1) + '"></label>'; }).join('') + '</div>' +
+          '<span class="field-hint">משאירים ריק? הקבוצה תקבל שם של אבן מהחושן.</span>'
+        : '<div class="team-preview">' + names.map((nm, i) => { const t = T.get(i, room);
+            return '<span class="team-chip" style="--c:' + t.color + '"><img src="' + t.pic + '" alt="">' + esc(t.name) + '</span>'; }).join('') + '</div>') +
+      '</div>';
+  };
+
   V.setup = (d) => {
     const tab = d.tab === 'settings' ? 'settings' : 'questions';
     return (
       '<section class="admin-main">' +
       '<div class="page-head setup-head"><div><h2>מכינים חידון חדש</h2>' +
-      '<p>שלב א׳ — בוחרים שאלות. שלב ב׳ — הגדרות. ואז פותחים משחק.</p></div></div>' +
+      '<p>קודם בוחרים שאלות, אחר כך מסדרים הגדרות, ופותחים משחק.</p></div></div>' +
       '<div class="setup-tabs" role="tablist">' +
       '<button type="button" role="tab" data-action="tab" data-value="questions" aria-selected="' + (tab === 'questions') + '"><i>א</i>שאלות</button>' +
       '<button type="button" role="tab" data-action="tab" data-value="settings" aria-selected="' + (tab === 'settings') + '"><i>ב</i>הגדרות</button>' +
@@ -94,7 +106,7 @@
           '<div class="tab-next"><button class="btn btn-ghost" type="button" data-action="tab" data-value="questions">' + A.icon('prev') + 'חזרה לשאלות</button></div>') +
       '</div>' +
       '<div class="launch-bar">' +
-      '<div class="lb-meta"><span class="lb-title">סיכום:</span>' + V.summary(d) + '</div>' +
+      '<div class="lb-meta" id="setup-summary"><span class="lb-title">סיכום:</span>' + V.summary(d) + '</div>' +
       '<button class="btn btn-accent btn-lg" type="button" data-action="open-room">' + A.icon('sparkle') + 'פתיחת המשחק</button>' +
       '</div>' +
       '</section>'
@@ -188,7 +200,7 @@
       '<button type="button" data-action="qe-kind" data-value="s" aria-pressed="' + isS + '">📊 סקר (בלי ניקוד)</button></div>' +
       '<label class="field"><span class="field-label">' + (isS ? 'שאלת הסקר' : 'השאלה') + '</span>' +
       '<textarea class="input" id="qe-text" rows="2" maxlength="200">' + esc(f.t) + '</textarea></label>' +
-      '<div class="field"><span class="field-label">תשובות' + (isS ? '' : ' — סמנו את הנכונה') + '</span>' +
+      '<div class="field"><span class="field-label">תשובות' + (isS ? '' : ' (סמנו את הנכונה)') + '</span>' +
       f.a.map((a, j) =>
         '<div class="qe-ans">' +
         (isS ? '<span class="qe-shape" style="--c:var(--a' + (j + 1) + ')">' + A.shape(j) + '</span>' :
@@ -220,7 +232,7 @@
     '<td class="num">' + r.row + '</td>' +
     '<td>' + (r.type === 'survey' ? '<span class="badge badge-primary">📊 סקר</span>' :
       r.type === 'question' ? '<span class="badge">שאלה</span>' : '<span class="badge badge-bad">?</span>') + '</td>' +
-    '<td class="q">' + (r.text ? esc(r.text) : '<span style="color:var(--bad)">— חסר —</span>') + '</td>' +
+    '<td class="q">' + (r.text ? esc(r.text) : '<span style="color:var(--bad)">חסרה שאלה</span>') + '</td>' +
     '<td><div class="ans-list">' + (r.answers || []).map((a, i) =>
       '<span class="ans' + (r.type === 'question' && i === r.correct ? ' is-correct' : '') + (a === '' ? ' is-empty' : '') + '">' +
       (r.type === 'question' && i === r.correct ? A.icon('check') : '') + (a === '' ? 'ריק' : esc(a)) + '</span>').join('') + '</div></td>' +
@@ -247,7 +259,8 @@
       '<div class="segmented" role="group" aria-label="משחק קבוצות" style="margin:0;grid-template-columns:repeat(4,1fr)">' +
       [[0, 'בלי'], [2, '2 קבוצות'], [3, '3 קבוצות'], [4, '4 קבוצות']].map(([n, l]) =>
         '<button type="button" data-action="teams" data-value="' + n + '" aria-pressed="' + ((d.teams || 0) === n) + '">' + l + '</button>').join('') +
-      '</div>' + (d.teams ? '<span class="field-hint">הילדים מתחלקים אוטומטית. ניקוד קבוצה = ממוצע הנקודות של חבריה.</span>' : '') + '</div>' : '') +
+      '</div>' + (d.teams ? '<span class="field-hint">המשתתפים מתחלקים אוטומטית. ניקוד קבוצה = ממוצע הנקודות של חבריה.</span>' : '') + '</div>' : '') +
+      (d.mode !== 'self' && d.teams ? V.teamNamesField(d) : '') +
       (d.mode !== 'self' ? '<div class="field"><span class="field-label">טבלת מובילים על המקרן</span>' +
       '<div class="segmented" role="group" aria-label="טבלת מובילים" style="margin:0;grid-template-columns:repeat(3,1fr)">' +
       [[3, 'כל 3 שאלות'], [5, 'כל 5 שאלות'], [0, 'בלי']].map(([n, l]) =>
@@ -302,7 +315,7 @@
       '<img class="anim-bob" src="' + A.img('balloon') + '" alt="" style="width:56px"></div>' +
       (d.players.length && d.teams
         ? '<div class="team-cols">' + d.teams.slice().sort((a, b) => a.i - b.i).map((t) =>
-            '<div class="team-col" style="--c:' + t.color + '"><h4><img src="' + A.img(t.img) + '" alt="">' + esc(t.name) + ' <small>' + t.count + '</small></h4>' +
+            '<div class="team-col" style="--c:' + t.color + '"><h4><img src="' + t.pic + '" alt="">' + esc(t.name) + ' <small>' + t.count + '</small></h4>' +
             '<div class="player-cloud">' + d.players.filter((p) => d.teamMap[p.id] === t.i).map((p) =>
               '<span class="p-chip' + (p.isNew !== false ? ' is-new' : '') + '">' + A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi></span>').join('') +
             '</div></div>').join('') + '</div>'
@@ -410,7 +423,7 @@
       '<div class="stage-top">' +
       '<span class="pill pill-q">שאלה <b>' + (d.i + 1) + '</b> מתוך <b>' + d.total + '</b></span>' +
       '<span class="pill pill-next">' + (d.manual ? 'לחצו "לשאלה הבאה" כשמוכנים' : d.paused ? A.icon('stop') + 'מושהה' :
-        (d.last ? 'עוד רגע — התוצאות הסופיות!' : 'השאלה הבאה תכף…')) + '</span>' +
+        (d.last ? 'עוד רגע, התוצאות הסופיות!' : 'השאלה הבאה תכף…')) + '</span>' +
       '</div>' +
       '<div class="stage-q small"><h2>' + esc(d.q.t) + '</h2></div>' +
       V.stageTiles(d.q, { reveal: true, counts: r.counts, sum }) +
@@ -482,7 +495,7 @@
     return (
       '<section class="admin-main">' +
       '<div class="results-hero"><h2>🎉 והמנצחים הם…</h2></div>' +
-      (d.teams && d.teams.length ? '<div class="team-win card" style="--c:' + d.teams[0].color + '"><img src="' + A.img(d.teams[0].img) + '" alt="">' +
+      (d.teams && d.teams.length ? '<div class="team-win card" style="--c:' + d.teams[0].color + '"><img src="' + d.teams[0].pic + '" alt="">' +
         '<div><small>הקבוצה המנצחת</small><b>' + esc(d.teams[0].name) + '</b></div></div>' + A.Teams.bars(d.teams) : '') +
       '<div class="podium">' +
       top.map((p, i) =>

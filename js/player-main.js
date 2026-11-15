@@ -71,8 +71,8 @@
     if (room.status === 'waiting') {
       A.Sound.stopMusic();
       const tIdx = room.teamCount ? (room.teams || {})[A.Net.uid()] : null;
-      const team = tIdx != null ? A.Teams.get(tIdx) : null;
-      if (P.screen !== 'waiting' || (P.data.team || null) !== team) P.render('waiting', Object.assign({}, M.session, { team }));
+      const team = tIdx != null ? A.Teams.get(tIdx, room) : null;
+      if (P.screen !== 'waiting' || ((P.data.team || {}).name || null) !== ((team || {}).name || null)) P.render('waiting', Object.assign({}, M.session, { team }));
       return;
     }
 

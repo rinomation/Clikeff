@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clikeff — צבעים ללוגו "קליק"</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Rubik:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Rubik', system-ui, sans-serif; color: #fff; background: #0b0f1a; padding: 40px 16px 60px; }
+  h1 { text-align: center; font-weight: 800; margin: 0 0 6px; font-size: 2rem; }
+  p.lead { text-align: center; color: #aab4cc; margin: 0 0 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 22px; max-width: 1240px; margin: 0 auto; }
+  .opt { background: #121829; border: 1px solid #222b44; border-radius: 22px; padding: 18px; display: grid; gap: 12px; }
+  .opt h2 { margin: 0; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .opt h2 b { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: #fff; color: #0b0f1a; }
+  .opt p { margin: 0; color: #aab4cc; font-size: .95rem; }
+  .pair { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; }
+  .stage { border-radius: 16px; padding: 14px; display: grid; place-items: center; background: radial-gradient(90% 100% at 30% 100%, var(--bg2), var(--bg) 70%); }
+  .stage.light { background: #fff; }
+  .sw { display: flex; gap: 6px; }
+  .sw i { width: 26px; height: 26px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); }
+  svg { width: 100%; height: auto; display: block; }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<h1>הלוגו "קליק" — בצבעים שונים</h1>
+<p class="lead">אותו לוגו, שש אפשרויות צבע. בכל אחת: על רקע כהה (אתר ומשחק) ועל רקע לבן (הדפסה).</p>
+
+<!-- הלוגו פעם אחת; הצבעים מגיעים מכל כרטיס -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="logo">
+      <text x="450" y="225" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="190" style="fill: var(--word)" direction="ltr">clıkeff</text>
+      <circle cx="372" cy="72" r="46" fill="none" style="stroke: var(--ring)" stroke-width="5" opacity=".35"/>
+      <circle cx="372" cy="72" r="31" fill="none" style="stroke: var(--ring)" stroke-width="6" opacity=".7"/>
+      <circle cx="372" cy="72" r="17" style="fill: var(--ring)"/>
+      <path d="M392 92 l38 92 l12 -36 l36 -12z" style="fill: var(--cursor); stroke: var(--edge)" stroke-width="7" stroke-linejoin="round"/>
+      <text x="450" y="300" text-anchor="middle" font-family="Rubik" font-weight="800" font-size="32" style="fill: var(--tag)">החידון שמדליק את הכיתה</text>
+    </g>
+  </defs>
+</svg>
+
+<div class="grid">
+
+  <section class="opt" style="--bg:#07130f; --bg2:#12352d; --word:#fff; --ring:#c8ff3e; --cursor:#ff8a3d; --edge:#07130f; --tag:#c8ff3e">
+    <h2><b>א</b>ירוק לילה וליים (המקורי)</h2>
+    <p>רענן וצעיר, מרגיש "טכנולוגי".</p>
+    <div class="sw"><i style="background:#07130f"></i><i style="background:#c8ff3e"></i><i style="background:#ff8a3d"></i></div>
+    <div class="pair">
+      <div class="stage"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+      <div class="stage light" style="--word:#07130f; --tag:#2c7a1f; --ring:#7cc400"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+    </div>
+  </section>
+
+  <section class="opt" style="--bg:#06142b; --bg2:#0f3266; --word:#fff; --ring:#2ee6ff; --cursor:#ff5a5f; --edge:#06142b; --tag:#2ee6ff">
+    <h2><b>ב</b>כחול עמוק ותכלת חשמלי</h2>
+    <p>דרמטי ונקי, כמו אולפן טלוויזיה בלילה. הסמן אדום-אלמוג.</p>
+    <div class="sw"><i style="background:#06142b"></i><i style="background:#2ee6ff"></i><i style="background:#ff5a5f"></i></div>
+    <div class="pair">
+      <div class="stage"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+      <div class="stage light" style="--word:#06142b; --tag:#0a7ea8; --ring:#12b8e0"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+    </div>
+  </section>
+
+  <section class="opt" style="--bg:#111111; --bg2:#2a2410; --word:#fff; --ring:#ffd000; --cursor:#ff3b30; --edge:#111111; --tag:#ffd000">
+    <h2><b>ג</b>שחור, צהוב ואדום</h2>
+    <p>הכי חזק ובולט — צבעים של שעשועון קלאסי ושל "הזמן נגמר!".</p>
+    <div class="sw"><i style="background:#111"></i><i style="background:#ffd000"></i><i style="background:#ff3b30"></i></div>
+    <div class="pair">
+      <div class="stage"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+      <div class="stage light" style="--word:#111; --tag:#b38f00; --ring:#f2b800"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+    </div>
+  </section>
+
+  <section class="opt" style="--bg:#08242a; --bg2:#0f4a52; --word:#fff; --ring:#ffb347; --cursor:#ff5e7a; --edge:#08242a; --tag:#ffb347">
+    <h2><b>ד</b>טורקיז כהה וכתום-שקיעה</h2>
+    <p>חם ונעים, פחות "צועק". מתאים מאוד לילדים.</p>
+    <div class="sw"><i style="background:#08242a"></i><i style="background:#ffb347"></i><i style="background:#ff5e7a"></i></div>
+    <div class="pair">
+      <div class="stage"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+      <div class="stage light" style="--word:#08242a; --tag:#c46f00; --ring:#ff9a1f"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+    </div>
+  </section>
+
+  <section class="opt" style="--bg:#1a0f08; --bg2:#4a2a0e; --word:#fff4e0; --ring:#ffcf5a; --cursor:#39d0a0; --edge:#1a0f08; --tag:#ffcf5a">
+    <h2><b>ה</b>שוקולד וזהב</h2>
+    <p>חגיגי ומיוחד, מתאים לאירועים ולחגים. הסמן ירוק-מנטה.</p>
+    <div class="sw"><i style="background:#1a0f08"></i><i style="background:#ffcf5a"></i><i style="background:#39d0a0"></i></div>
+    <div class="pair">
+      <div class="stage"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+      <div class="stage light" style="--word:#3a220c; --tag:#a8740a; --ring:#e6a91a"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+    </div>
+  </section>
+
+  <section class="opt" style="--bg:#0e0e1a; --bg2:#23233d; --word:#fff; --ring:#7dff9b; --cursor:#ffd23a; --edge:#0e0e1a; --tag:#e7e7ff">
+    <h2><b>ו</b>אפור-לילה, ירוק בהיר וצהוב</h2>
+    <p>שקט ומאוזן, הצבעים העזים רק בנקודה ובסמן.</p>
+    <div class="sw"><i style="background:#0e0e1a"></i><i style="background:#7dff9b"></i><i style="background:#ffd23a"></i></div>
+    <div class="pair">
+      <div class="stage"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+      <div class="stage light" style="--word:#0e0e1a; --tag:#4a4a66; --ring:#1fbf55"><svg viewBox="0 0 900 330"><use href="#logo"/></svg></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

@@ -44,6 +44,8 @@
         const again = $('input[name="track"][value="' + r.value + '"]');
         if (again) again.focus();
       }));
+    A.$$('[data-team-name]').forEach((inp) => {
+      inp.addEventListener('input', () => { if (M.handlers.onTeamName) M.handlers.onTeamName(Number(inp.dataset.teamName), inp.value); });    });
     const rank = $('#show-rank');
     if (rank) rank.addEventListener('change', () => {
       M.data.showRank = rank.checked;

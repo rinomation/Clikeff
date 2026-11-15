@@ -480,3 +480,17 @@
 .lb-title { font-family: var(--font-display); font-weight: 600; align-self: center; margin-inline-end: 4px; }
 .setup-head, .setup-tabs, .setup-panel { max-width: 860px; margin-inline: auto; }
 .setup-tabs { margin-bottom: 18px; }
+
+/* שמות הקבוצות */
+.team-sets { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 .98rem var(--font-body, 'Rubik'), sans-serif; padding: 8px 16px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: background .15s, transform .2s var(--ease-bounce); }
+.chip:hover { transform: translateY(-2px); }
+.chip[aria-pressed="true"] { background: var(--primary); color: var(--on-primary, #fff); border-color: var(--primary); }
+.team-preview { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.team-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 999px; border: 2px solid var(--c); background: var(--surface); font-weight: 700; animation: pop-in .4s var(--ease-bounce) both; }
+.team-chip:nth-child(2) { animation-delay: .06s; } .team-chip:nth-child(3) { animation-delay: .12s; } .team-chip:nth-child(4) { animation-delay: .18s; }
+.team-chip img { width: 28px; height: 28px; }
+.team-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+.team-input { display: flex; align-items: center; gap: 10px; padding-inline-start: 10px; border-radius: 14px; border: 2px solid var(--c); background: var(--surface); }
+.team-input img { width: 30px; height: 30px; flex: none; }
+.team-input .input { border: 0 !important; box-shadow: none !important; background: transparent; }
