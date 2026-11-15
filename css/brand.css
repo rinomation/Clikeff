@@ -403,3 +403,16 @@ body:has(.stage-clock.is-urgent)::after { content: ""; position: fixed; inset: 0
 @keyframes crown-sway { 50% { transform: rotate(-8deg) translateY(-4px); } }
 .podium .p-score b { font-family: 'Fredoka', sans-serif; color: var(--cyan); font-size: 1.25em; }
 .podium .p1 .p-name { font-size: clamp(1.4rem, 2.6vw, 2rem); color: var(--amber); }
+
+/* לובי בקבוצות: בועות קטנות יותר בתוך כל קבוצה */
+.team-cols { gap: 18px; }
+.team-col { padding: 16px 14px 6px; background: rgba(255, 255, 255, .03) !important; }
+.team-col h4 { font-size: 1.35rem; font-weight: 900; gap: 10px; }
+.team-col h4 img { width: 40px; height: 40px; animation: gem-spin 4s ease-in-out infinite; }
+@keyframes gem-spin { 0%, 100% { transform: rotate(-8deg) scale(1); } 50% { transform: rotate(8deg) scale(1.1); } }
+.team-col .player-cloud.bubbles { gap: 16px 10px; padding: 8px 0 14px; }
+.team-col .p-bub { width: 90px; }
+.team-col .p-bub .avatar { width: 66px; height: 66px; border-color: color-mix(in srgb, var(--c) 60%, transparent) !important; }
+.team-col .p-bub bdi { font-size: 1rem; }
+
+.music-credit { margin-top: 10px; font-size: .78rem; opacity: .75; }

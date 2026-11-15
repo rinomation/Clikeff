@@ -7,11 +7,12 @@
   const V = (A.AdminView = {});
 
   V.TRACKS = [
-    { id: 'fun', name: 'שמח וקופצני', desc: 'מרימבה עליזה', img: 'party_popper' },
-    { id: 'chase', name: 'חגיגה', desc: 'בסגנון פריילעך', img: 'balloon' },
-    { id: 'drama', name: 'מתח קליל', desc: 'פריטות מותחות', img: 'hourglass_not_done' },
-    { id: 'mystery', name: 'סקרנות', desc: 'צלצולים שקטים', img: 'owl' },
-    { id: 'cinema', name: 'רגוע', desc: 'נעים ושקט', img: 'rainbow' }
+    { id: 'fun', name: 'שעשועון', desc: 'קצבי ושמח', img: 'party_popper' },
+    { id: 'kids', name: 'שובבי', desc: 'קליל ומצחיק', img: 'monkey_face' },
+    { id: 'chase', name: 'חגיגה', desc: 'פולקה מהירה', img: 'balloon' },
+    { id: 'drama', name: 'מתח קליל', desc: 'על קצות האצבעות', img: 'hourglass_not_done' },
+    { id: 'mystery', name: 'סקרנות', desc: 'מסתורי ושקט', img: 'owl' },
+    { id: 'cinema', name: 'רגוע', desc: 'נעים ונינוח', img: 'rainbow' }
   ];
   V.track = (id) => V.TRACKS.find((t) => t.id === id) || V.TRACKS[0];
 
@@ -279,7 +280,7 @@
         '<span class="t-meta"><b>' + t.name + '</b><span>' + t.desc + '</span></span>' +
         '<button type="button" class="play' + (d.playing === t.id ? ' is-playing' : '') + '" data-action="preview-track" data-value="' + t.id + '">' +
         A.icon(d.playing === t.id ? 'stop' : 'play') + (d.playing === t.id ? 'עצירה' : 'נגן דוגמה') + '</button></label>').join('') +
-      '</div></fieldset>' +
+      '</div><p class="field-hint music-credit">המוזיקה: <bdi>Kevin MacLeod (incompetech.com)</bdi>, ברישיון <bdi>CC BY 4.0</bdi></p></fieldset>' +
       '<label class="setting-row switch"><span><b>דירוג אישי בסיום</b><span class="sub">כל משתתף יראה את המקום והניקוד שלו</span></span>' +
       '<input type="checkbox" id="show-rank"' + (d.showRank ? ' checked' : '') + '><span class="switch-track"></span></label>' +
       '</div>'
@@ -316,8 +317,8 @@
       (d.players.length && d.teams
         ? '<div class="team-cols">' + d.teams.slice().sort((a, b) => a.i - b.i).map((t) =>
             '<div class="team-col" style="--c:' + t.color + '"><h4><img src="' + t.pic + '" alt="">' + esc(t.name) + ' <small>' + t.count + '</small></h4>' +
-            '<div class="player-cloud">' + d.players.filter((p) => d.teamMap[p.id] === t.i).map((p) =>
-              '<span class="p-chip' + (p.isNew !== false ? ' is-new' : '') + '">' + A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi></span>').join('') +
+            '<div class="player-cloud bubbles">' + d.players.filter((p) => d.teamMap[p.id] === t.i).map((p, i) =>
+              '<span class="p-bub' + (p.offline ? ' is-off' : '') + (p.isNew !== false ? ' is-new' : '') + '" style="--k:' + (i % 7) + ';--ph:-' + (Date.now() / 1000 % 900).toFixed(2) + 's">' + A.avatarHTML(p.avatar) + '<bdi>' + esc(p.name) + '</bdi></span>').join('') +
             '</div></div>').join('') + '</div>'
         : d.players.length
         ? '<div class="player-cloud bubbles">' + d.players.slice().sort((a, b) => a.name.localeCompare(b.name, 'he')).map((p, i) =>
