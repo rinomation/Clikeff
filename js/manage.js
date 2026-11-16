@@ -29,15 +29,46 @@
     return { k: 'ok', t: 'פעיל' };
   }
 
+  /** הודעת ברוכים הבאים למוסד (בעיצוב של וואטסאפ: *מודגש*, _נטוי_) */
   function message(x) {
-    return 'שלום ' + x.name + ',\n' +
-      'המנוי שלך ל-Clikeff מוכן!\n\n' +
-      'כניסה למנחים: ' + GAME_URL + '\n' +
-      'מייל: ' + x.email + '\n' +
-      'סיסמה: ' + x.pass + '\n\n' +
-      'המנוי בתוקף עד ' + fmt(x.expires) + '.\n' +
-      'לוחצים, נהנים, משחקים!';
+    return [
+      '🎉 *ברוכים הבאים ל-Clikeff, ' + x.name + '!*',
+      '_לוחצים, נהנים, משחקים!_',
+      '',
+      'המנוי שלכם מוכן, ואפשר להתחיל לשחק ✨',
+      '',
+      '🔑 *פרטי הכניסה למנחה*',
+      '🔗 ' + GAME_URL,
+      '📧 מייל: ' + x.email,
+      '🔒 סיסמה: ' + x.pass,
+      '📅 בתוקף עד: ' + fmt(x.expires),
+      '',
+      '🚀 *איך מתחילים? 3 צעדים קטנים*',
+      '1️⃣ נכנסים לקישור ולוחצים *"פתיחת חידון חדש"*',
+      '2️⃣ בוחרים שאלות: מהמאגר המוכן, מקובץ אקסל, או כותבים לבד',
+      '3️⃣ לוחצים *"פתיחת המשחק"* ומציגים את המסך על המקרן',
+      '',
+      '🙋 *איך המשתתפים נכנסים?*',
+      'על המקרן מופיעים קישור וקוד של 6 ספרות.',
+      'כל אחד נכנס מהטאבלט או מהמחשב, מקליד את הקוד, בוחר שם ודמות, ומופיע על המסך.',
+      'בלי הרשמה ובלי התקנה!',
+      '',
+      '💡 *כמה טיפים*',
+      '• כדאי לחבר רמקולים, יש מוזיקה וצלילים 🎵',
+      '• אפשר לשחק בקבוצות, ולבחור כל כמה שאלות תופיע טבלת מובילים 🏆',
+      '• בסוף המשחק אפשר להוריד את התוצאות לאקסל 📊',
+      '',
+      'שאלות? אני כאן בשבילכם 💬',
+      'וואטסאפ: 054-220-3441',
+      '',
+      'בהצלחה, ושיהיה המון כיף! 🎈'
+    ].join('\n');
   }
+  /** אותה הודעה בלי סימני העיצוב של וואטסאפ (למייל) */
+  const plain = (x) => message(x).replace(/\*/g, '').replace(/(^|\n)_|_(\n|$)/g, '$1$2');
+  /** תצוגה מקדימה כמו בוואטסאפ */
+  const preview = (x) => esc(message(x))
+    .replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(^|\n)_([^_\n]+)_/g, '$1<i>$2</i>').replace(/\n/g, '<br>');
   const copy = (t, ok) => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
     .then(() => A.toast(ok || 'הועתק', { type: 'ok' })).catch(() => A.toast('לא הצלחנו להעתיק', { type: 'bad' }));
 
@@ -117,8 +148,10 @@
         '<a class="btn btn-accent btn-block" href="https://wa.me/' + waNum(x.phone) + '?text=' + encodeURIComponent(message(x)) + '" target="_blank" rel="noopener">' + ic('send') + 'שליחה בוואטסאפ</a>' +
         '<div class="m-two">' +
         '<button class="btn btn-ghost" type="button" data-action="copy-msg">' + ic('copy') + 'העתקה</button>' +
-        '<a class="btn btn-ghost" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent('המנוי שלך ל-Clikeff') + '&body=' + encodeURIComponent(message(x)) + '">' + ic('mail') + 'במייל</a>' +
+        '<a class="btn btn-ghost" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent('המנוי שלך ל-Clikeff') + '&body=' + encodeURIComponent(plain(x)) + '">' + ic('mail') + 'במייל</a>' +
         '</div>' +
+        '<div class="wa-wrap"><span class="wa-label">ככה ההודעה תיראה אצל הלקוח</span>' +
+        '<div class="wa-chat"><div class="wa-bubble" dir="rtl">' + preview(x) + '<span class="wa-time">' + new Date().toTimeString().slice(0, 5) + ' ✓✓</span></div></div></div>' +
         '<button class="link-btn" type="button" data-action="new-again">יצירת לקוח נוסף</button>' +
         '</div></aside>';
     }
@@ -466,7 +499,7 @@
       case 'open': st.open = st.open === v ? null : v; st.edit = null; return viewDash();
       case 'show-pass': st.shown[v] = !st.shown[v]; return viewDash();
       case 'copy-pass': { const l = find(v); return l && copy(l.pass, 'הסיסמה הועתקה'); }
-      case 'copy-msg': return st.last && copy(message(st.last), 'ההודעה הועתקה. אפשר להדביק בוואטסאפ או במייל.');
+      case 'copy-msg': return st.last && copy(message(st.last), 'ההודעה הועתקה. מדביקים בוואטסאפ, והעיצוב נשמר.');
       case 'new-again': { st.last = null; st.form = {}; viewDash(); const n = $('#n-name'); if (n) n.focus(); return; }
       case 'resend': {
         const l = find(v); if (!l) return;

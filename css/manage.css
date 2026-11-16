@@ -139,3 +139,14 @@
 .m-exists > span { color: var(--text-soft); font-size: .9rem; }
 .m-exists .field { margin-bottom: 4px; }
 .m-exists .link-btn { justify-self: center; }
+
+/* ---------- תצוגה מקדימה של הודעת הפתיחה (כמו בוואטסאפ) ---------- */
+.wa-wrap { margin-top: 6px; }
+.wa-label { display: block; font-size: .8rem; color: var(--text-mute); margin-bottom: 6px; text-align: center; }
+.wa-chat { padding: 14px 12px; border-radius: 16px; max-height: 360px; overflow: auto;
+  background-color: #0b141a;
+  background-image: radial-gradient(rgba(255, 255, 255, .035) 1px, transparent 1.2px); background-size: 16px 16px; }
+.wa-bubble { position: relative; margin-inline-start: 18px; padding: 10px 12px 22px; border-radius: 12px 0 12px 12px; background: #005c4b; color: #e9edef; font: 400 .92rem/1.55 'Rubik', system-ui, sans-serif; text-align: start; box-shadow: 0 1px 1px rgba(0, 0, 0, .3); animation: rise-in .4s var(--ease-out) both; }
+.wa-bubble::before { content: ""; position: absolute; top: 0; inset-inline-start: -8px; border: 8px solid transparent; border-top-color: #005c4b; border-inline-end-color: #005c4b; }
+.wa-bubble b { font-weight: 700; }
+.wa-time { position: absolute; bottom: 4px; inset-inline-end: 10px; font-size: .7rem; color: rgba(233, 237, 239, .6); direction: ltr; }
