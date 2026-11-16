@@ -378,6 +378,7 @@
     return (
       '<section class="admin-main"><div class="lobby">' +
       '<div class="card join-panel">' +
+      (d.hostName ? '<p class="jp-host">החידון של <b>' + esc(d.hostName) + '</b></p>' : '') +
       '<h2 class="jp-title">הצטרפו עכשיו!</h2>' +
       '<p class="field-hint" style="margin-bottom:6px">נכנסים לקישור:</p>' +
       '<span class="jp-url"><span>' + esc(A.joinUrl('').replace(/^https?:\/\//, '').replace(/\/$/, '')) + '</span>' +

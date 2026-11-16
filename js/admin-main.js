@@ -211,7 +211,8 @@
       const questions = buildQuestions();
       const code = await A.Net.createRoom({
         duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {}, teamSet: S.cfg.teamSet || A.Teams.DEFAULT, teamNames: A.Teams.names(S.cfg), boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
-        questions, qCount: questions.length, source: S.cfg.source
+        questions, qCount: questions.length, source: S.cfg.source,
+        hostName: S.owner ? '' : String((S.license && S.license.name) || '').slice(0, 60)
       });
       A.store.set('hostRoom', code);
       attach(code);
@@ -441,7 +442,7 @@
       const list = players();
       const base = { code: S.code, players: list, total: (S.room.questions || []).length, teams: teamData(list), teamMap: teamMapNow() };
       if (S.view === 'lobby') {
-        M.render('lobby', Object.assign(base, { qCount: base.total, duration: S.room.duration, track: S.room.track }));
+        M.render('lobby', Object.assign(base, { qCount: base.total, duration: S.room.duration, track: S.room.track, hostName: S.room.hostName || '' }));
       } else if (S.view === 'results') {
         /* מציירים מחדש רק כשהתוצאות עצמן השתנו, כדי שהפודיום לא יתחיל מההתחלה */
         const rk = JSON.stringify([list.slice(0, 3).map((p) => [p.id, p.score, p.avatar]), (base.teams || []).map((t) => [t.name, t.avg])]);

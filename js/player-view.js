@@ -55,6 +55,7 @@
     '<div class="wait-avatar"><span class="ring"></span><span class="ring r2"></span>' +
     '<span class="disc"><img src="' + A.img(A.safeAvatar(d.avatar)) + '" alt=""></span></div>' +
     '<h2 class="wait-hello">היי <bdi>' + esc(d.name) + '</bdi>!</h2>' +
+    (d.hostName ? '<p class="wait-host">המשחק של <b>' + esc(d.hostName) + '</b></p>' : '') +
     '<p class="wait-room">נכנסת למשחק <bdi dir="ltr">' + esc(A.prettyCode(d.code)) + '</bdi></p>' +
     (d.team ? '<div class="team-badge" style="--c:' + d.team.color + '"><img src="' + d.team.pic + '" alt="">בקבוצת <b>' + esc(d.team.name) + '</b></div>' : '') +
     '<div class="wait-status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>' +

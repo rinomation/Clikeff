@@ -80,14 +80,14 @@
         M.lastStarting = sAt;
         if (!first || (room.updatedAt && room.updatedAt.ms === sAt)) {
           M.fastUntil = Date.now() + 15000;
-          P.render('waiting', Object.assign({}, M.session, { team: P.data.team || null, message: 'מתחילים! הסתכלו על המסך הגדול' }));
+          P.render('waiting', Object.assign({}, M.session, { team: P.data.team || null, hostName: room.hostName || '', message: 'מתחילים! הסתכלו על המסך הגדול' }));
           return;
         }
       } else if (!sAt) M.lastStarting = null;
       if (P.data && P.data.message && Date.now() < (M.fastUntil || 0)) return;
       const tIdx = room.teamCount ? (room.teams || {})[A.Net.uid()] : null;
       const team = tIdx != null ? A.Teams.get(tIdx, room) : null;
-      if (P.screen !== 'waiting' || ((P.data.team || {}).name || null) !== ((team || {}).name || null)) P.render('waiting', Object.assign({}, M.session, { team }));
+      if (P.screen !== 'waiting' || ((P.data.team || {}).name || null) !== ((team || {}).name || null) || (P.data.hostName || '') !== (room.hostName || '')) P.render('waiting', Object.assign({}, M.session, { team, hostName: room.hostName || '' }));
       return;
     }
 
