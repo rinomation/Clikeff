@@ -132,8 +132,13 @@
       [[1, 'חודש'], [6, 'חצי שנה'], [12, 'שנה'], [24, 'שנתיים']].map((m) =>
         '<button type="button" class="chip" data-action="months" data-value="' + m[0] + '" aria-pressed="' + ((f.months || 12) === m[0]) + '">' + m[1] + '</button>').join('') +
       '</div></div>' +
+      (f.exists ? '<div class="m-exists"><b>למייל הזה כבר יש חשבון, אבל בלי מנוי.</b>' +
+        '<span>כנראה הוא נוצר לפני שכללי האבטחה עודכנו. כתבי את הסיסמה שנשלחה ללקוח, ונחבר אליו את המנוי.</span>' +
+        '<label class="field"><span class="field-label">הסיסמה של הלקוח</span><input class="input" id="n-oldpass" dir="ltr" autocomplete="off"></label>' +
+        '<button class="btn btn-primary btn-block" type="button" data-action="attach"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'מחברים…' : 'חיבור המנוי לחשבון הקיים') + '</button>' +
+        '<button class="link-btn" type="button" data-action="attach-cancel">ביטול</button></div>' : '') +
       '<p class="form-error" role="alert">' + (f.error ? A.icon('alert') + esc(f.error) : '') + '</p>' +
-      '<button class="btn btn-accent btn-lg btn-block" type="submit"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'יוצרים…' : 'יצירת מנוי') + '</button>' +
+      (f.exists ? '' : '<button class="btn btn-accent btn-lg btn-block" type="submit"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'יוצרים…' : 'יצירת מנוי') + '</button>') +
       '<p class="m-hint">המערכת יוצרת סיסמה, והמנוי מתחיל מהיום.</p>' +
       '</form></aside>';
   }
@@ -330,7 +335,11 @@
       await sec.auth().signOut();
     } catch (e) {
       f.busy = false;
-      f.error = /email-already-in-use/.test(e.code || '') ? 'המייל הזה כבר רשום. אם זה לקוח קיים, אפשר לחדש לו את המנוי מהרשימה.' : N.authError(e);
+      if (/email-already-in-use/.test(e.code || '')) {
+        const inList = st.list.some((x) => (x.email || '').toLowerCase() === email);
+        if (inList) f.error = 'הלקוח הזה כבר ברשימה. אפשר לחדש לו את המנוי משם.';
+        else { f.exists = true; f.error = null; }
+      } else f.error = N.authError(e);
       return viewDash();
     }
     const exp = new Date(); exp.setMonth(exp.getMonth() + months);
@@ -347,6 +356,40 @@
     st.open = newUid;
     viewDash();
     A.toast('המנוי נוצר!', { type: 'ok' });
+  }
+
+  /** חשבון שכבר קיים בלי מנוי: נכנסים אליו (בצד, בלי לנתק את המנהלת) כדי לדעת את מספר החשבון, ושומרים מנוי */
+  async function doAttach() {
+    const f = st.form;
+    const name = ($('#n-name').value || '').trim(), email = ($('#n-email').value || '').trim().toLowerCase();
+    const phone = ($('#n-phone').value || '').replace(/[^0-9+]/g, ''), months = f.months || 12;
+    const pass = ($('#n-oldpass').value || '').trim();
+    Object.assign(f, { name, email, phone, error: null });
+    if (!name) { f.error = 'נא לכתוב את שם הלקוח'; return viewDash(); }
+    if (!pass) { f.error = 'נא לכתוב את הסיסמה של הלקוח'; return viewDash(); }
+    f.busy = true; viewDash();
+    let uidOf = null;
+    try {
+      const sec = firebase.apps.find((a) => a.name === 'creator') || firebase.initializeApp(window.FIREBASE_CONFIG, 'creator');
+      await sec.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+      const c = await sec.auth().signInWithEmailAndPassword(email, pass);
+      uidOf = c.user.uid;
+      await sec.auth().signOut();
+    } catch (e) {
+      f.busy = false;
+      f.error = /wrong-password|invalid-credential|INVALID_LOGIN/.test(e.code || e.message || '') ? 'הסיסמה לא מתאימה למייל הזה. בדקי בהודעה שנשלחה ללקוח.' : N.authError(e);
+      return viewDash();
+    }
+    const exp = new Date(); exp.setMonth(exp.getMonth() + months);
+    try {
+      await R.set('licenses/' + uidOf, { name, email, phone, pass, passAt: R.NOW, active: true, expires: exp, months, createdAt: R.NOW, updatedAt: R.NOW });
+    } catch (e) { f.busy = false; f.error = N.errorText(e); return viewDash(); }
+    st.last = { name, email, pass, phone, expires: exp.getTime() };
+    st.form = {};
+    await loadList();
+    st.open = uidOf;
+    viewDash();
+    A.toast('המנוי חובר לחשבון של ' + name, { type: 'ok' });
   }
 
   async function patch(id, data, okMsg) {
@@ -399,6 +442,8 @@
       case 'copy-uid': return copy(st.user.uid, 'המספר הועתק');
       case 'retry': try { await st.user.getIdToken(true); } catch (err) { /* */ } return route();
       case 'months': st.form.months = Number(v); return viewDash();
+      case 'attach': return doAttach();
+      case 'attach-cancel': st.form.exists = false; st.form.error = null; return viewDash();
       case 'filter': st.filter = v; return viewDash();
       case 'tab': st.tab = v; return viewDash();
       case 'lead-filter': st.leadFilter = v; return viewDash();
