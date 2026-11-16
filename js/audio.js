@@ -291,7 +291,7 @@
   S.beep = (high) => {
     if (!ctx) return;
     const t = ctx.currentTime;
-    tone(t, sfxBus, { note: high ? 88 : 81, type: 'square', len: high ? 0.07 : 0.1, vol: 0.18, cutoff: 6000, sus: 0.6 });
+    tone(t, sfxBus, { note: high ? 88 : 81, type: 'square', len: high ? 0.08 : 0.11, vol: 0.34, cutoff: 6500, sus: 0.6 });
   };
 
   /** פעמון ענק: צלילים חלקיים לא הרמוניים, הכאה מתכתית והדהוד ארוך */
@@ -400,7 +400,10 @@
       if (k >= 1) { clearInterval(fadeT); if (done) done(); }
     }, 30);
   }
-  const target = () => (muted ? 0 : VOL);
+  let ducked = false;
+  const target = () => (muted ? 0 : VOL * (ducked ? 0.3 : 1));
+  /** בשניות האחרונות של שאלה: המוזיקה יורדת כדי שישמעו את הצפצופים */
+  S.duck = (on) => { if (ducked === !!on) return; ducked = !!on; if (el && fileOn) fade(target(), 300); };
 
   S.playMusic = (id) => {
     if (!FILES[id] && !TRACKS[id]) id = 'fun';

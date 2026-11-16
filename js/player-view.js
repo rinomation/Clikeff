@@ -142,7 +142,8 @@
     '<span class="time-num" aria-live="off">' + A.icon('clock') + '<span id="time-left">' + Math.ceil(d.rem) + '</span></span>' +
     V.muteBtn(d.muted) + '</header>' +
     '<div class="timebar" id="timebar" style="--p:' + (d.rem / d.duration) + '"><div class="timebar-fill"></div></div>' +
-    '<p class="pad-hint">' + (d.survey ? '📊 סקר: בחרו את מה שמתאים לכם' : 'הסתכלו על המסך הגדול ובחרו תשובה') + '</p>' +
+    (d.qText ? '<h2 class="pad-q">' + (d.survey ? '<small>📊 סקר</small>' : '') + esc(d.qText) + '</h2>'
+      : '<p class="pad-hint">' + (d.survey ? '📊 סקר: בחרו את מה שמתאים לכם' : 'הסתכלו על המסך הגדול ובחרו תשובה') + '</p>') +
     '<div class="answers pad-answers' + (d.answers.length > 4 ? ' cols-1' : '') + '">' +
     d.answers.map((txt, j) =>
       '<button type="button" class="answer" data-answer="' + j + '" aria-label="' + A.SHAPE_NAMES[j % 6] + ': ' + esc(txt) + '">' +

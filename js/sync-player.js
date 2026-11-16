@@ -28,7 +28,7 @@
       if (Z.st.ans[i] != null) return showSent();
       if (remaining() <= 0) return showTimeUp(i); /* הזמן שלו נגמר: לא חוזרים לכפתורים */
       if (P.screen === 'pad' && P.data.i === i) return;
-      P.render('pad', { i, total: room.questions.length, answers: room.questions[i].a,
+      P.render('pad', { i, total: room.questions.length, answers: room.questions[i].a, qText: room.showQ ? room.questions[i].t : '',
         survey: room.questions[i].k === 's', rem: remaining(), duration: room.duration,
         team: room.teamCount && (room.teams || {})[A.Net.uid()] != null ? A.Teams.get(room.teams[A.Net.uid()], room) : null });
       startLoop();

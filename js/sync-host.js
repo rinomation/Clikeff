@@ -69,6 +69,7 @@
     const qStarts = (room.qStarts || []).slice();
     qStarts[i] = Math.round(serverNow());
     beeped = {};
+    A.Sound.duck(false);
     A.Sound.playMusic(room.track);
     return write({ status: 'active', mode: 'sync', phase: 'question', qIndex: i, qStarts, reveal: null });
   }
@@ -77,6 +78,7 @@
 
   /** תוצאות השאלה: תשובה נכונה, התפלגות, המהירים, ונקודות לכל ילד */
   Y.toReveal = async () => {
+    A.Sound.duck(false);
     const room = ctx.room(), players = ctx.players(), i = room.qIndex;
     const res = Y.scoreQuestion(room, players, i, room.qStarts[i]);
     const tot = Y.totals(room, players, i);
@@ -135,6 +137,7 @@
 
     if (room.phase === 'question') {
       const rem = Y.remaining();
+      if (rem <= 5.3 && rem > 0) A.Sound.duck(true);
       BEEPS.forEach((b) => { if (rem <= b && rem > 0 && !beeped[b]) { beeped[b] = 1; A.Sound.beep(b <= 2.5); } });
       if (ctx.onTick) ctx.onTick(rem, room.duration);
       const c = Y.answeredCount();
@@ -143,7 +146,7 @@
         A.Sound.bell();
         if (wasPlaying) setTimeout(() => A.Sound.resumeMusic(), 4000);
         Y.toReveal();
-      } else if (c.total > 0 && c.n >= c.total && Date.now() - phaseAt > 1500) {
+      } else if (room.early && c.total > 0 && c.n >= c.total && Date.now() - phaseAt > 1500) {
         Y.toReveal();
       }
     } else if (room.phase === 'reveal' || room.phase === 'board') {

@@ -46,6 +46,8 @@
     if (sum) sum.innerHTML = '<span class="lb-title">סיכום:</span>' + A.AdminView.summary(setupData());
   };
   H.advance = (v) => { S.cfg.advance = v; saveCfg(); S.showSetup(); };
+  H.showQ = (v) => { S.cfg.showQ = v === '1'; saveCfg(); S.showSetup(); };
+  H.early = (v) => { S.cfg.early = v === '1'; saveCfg(); S.showSetup(); };
   H['go-setup'] = () => { S.tab = 'questions'; S.showSetup(); window.scrollTo(0, 0); };
   H.tab = (v) => { S.tab = v; S.showSetup(); window.scrollTo(0, 0); };
   H.mode = (v) => { S.cfg.mode = v; saveCfg(); S.showSetup(); };
@@ -210,7 +212,7 @@
     try {
       const questions = buildQuestions();
       const code = await A.Net.createRoom({
-        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {}, teamSet: S.cfg.teamSet || A.Teams.DEFAULT, teamNames: A.Teams.names(S.cfg), boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
+        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto', showQ: !!S.cfg.showQ, early: !!S.cfg.early, teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {}, teamSet: S.cfg.teamSet || A.Teams.DEFAULT, teamNames: A.Teams.names(S.cfg), boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
         questions, qCount: questions.length, source: S.cfg.source,
         hostName: S.owner ? '' : String((S.license && S.license.name) || '').slice(0, 60)
       });

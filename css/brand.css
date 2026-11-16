@@ -469,3 +469,14 @@ body:has(.stage-clock.is-urgent)::after { content: ""; position: fixed; inset: 0
 /* יציאה ממשחק אצל הילד */
 .leave-btn { margin-top: 14px; font-size: .95rem; opacity: .85; }
 .new-game-btn { margin-top: 16px; }
+
+/* סקר: עמודות אחוזים על המקרן */
+.stage-ans.is-survey { animation: none; }
+.stage-ans .sv-fill { position: absolute; inset-block: 0; inset-inline-start: 0; width: 0; background: rgba(255, 255, 255, .28); animation: sv-grow 1.2s cubic-bezier(.22, 1, .36, 1) both; pointer-events: none; }
+@keyframes sv-grow { from { width: 0; } }
+.stage-ans .sv-pct { position: relative; z-index: 1; margin-inline-start: auto; display: grid; justify-items: center; line-height: 1; font-family: 'Fredoka', sans-serif; font-size: 1.5em; }
+.stage-ans .sv-pct small { font-family: 'Rubik', sans-serif; font-size: .45em; font-weight: 700; opacity: .85; margin-top: 4px; }
+.stage-ans .shape, .stage-ans .txt { position: relative; z-index: 1; }
+/* השאלה במכשיר של המשתתף */
+.pad-q { margin: 6px 4px 12px; font-size: clamp(1.3rem, 4.6vw, 2rem); font-weight: 800; line-height: 1.3; text-align: center; animation: q-in .6s cubic-bezier(.22, 1, .36, 1) both; }
+.pad-q small { display: block; font-size: .55em; color: var(--cyan); margin-bottom: 4px; }

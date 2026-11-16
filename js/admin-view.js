@@ -351,6 +351,16 @@
       [[3, 'כל 3 שאלות'], [5, 'כל 5 שאלות'], [0, 'בלי']].map(([n, l]) =>
         '<button type="button" data-action="boardEvery" data-value="' + n + '" aria-pressed="' + ((d.boardEvery == null ? 3 : d.boardEvery) === n) + '">' + l + '</button>').join('') +
       '</div></div>' : '') +
+      (d.mode !== 'self' ? '<div class="field"><span class="field-label">מה רואים המשתתפים במכשיר</span>' +
+      '<div class="segmented" role="group" aria-label="מה רואים המשתתפים" style="margin:0">' +
+      '<button type="button" data-action="showQ" data-value="0" aria-pressed="' + !d.showQ + '">רק כפתורי התשובות</button>' +
+      '<button type="button" data-action="showQ" data-value="1" aria-pressed="' + !!d.showQ + '">גם את השאלה</button>' +
+      '</div><span class="field-hint">' + (d.showQ ? 'כל משתתף רואה במכשיר שלו גם את השאלה. מתאים כשאין מקרן.' : 'השאלה מוצגת רק על המסך הגדול.') + '</span></div>' : '') +
+      (d.mode !== 'self' ? '<div class="field"><span class="field-label">כשכולם ענו לפני הזמן</span>' +
+      '<div class="segmented" role="group" aria-label="כשכולם ענו" style="margin:0">' +
+      '<button type="button" data-action="early" data-value="0" aria-pressed="' + !d.early + '">מחכים לסוף הזמן</button>' +
+      '<button type="button" data-action="early" data-value="1" aria-pressed="' + !!d.early + '">עוברים מיד לתשובה</button>' +
+      '</div></div>' : '') +
       (d.mode !== 'self' ? '<div class="field"><span class="field-label">מעבר בין שאלות</span>' +
       '<div class="segmented" role="group" aria-label="מעבר בין שאלות" style="margin:0">' +
       '<button type="button" data-action="advance" data-value="auto" aria-pressed="' + (d.advance !== 'manual') + '">אוטומטי</button>' +
@@ -476,12 +486,13 @@
   V.stageTiles = (q, opts) => '<div class="stage-answers' + (q.a.length > 4 ? ' many' : '') + '">' +
     q.a.map((txt, j) => {
       let cls = 'stage-ans';
-      if (opts && opts.reveal) cls += q.k === 's' || j === q.c ? ' is-correct' : ' is-dim';
+      if (opts && opts.reveal) cls += q.k === 's' ? ' is-survey' : j === q.c ? ' is-correct' : ' is-dim';
       const cnt = opts && opts.counts ? opts.counts[j] || 0 : null;
       const pct = cnt != null && opts.sum ? Math.round(cnt / opts.sum * 100) : 0;
       return '<div class="' + cls + '" style="--c:var(--a' + (j % 6 + 1) + ')">' +
         '<span class="shape">' + A.shape(j) + '</span><span class="txt">' + esc(txt) + '</span>' +
-        (cnt != null ? '<span class="cnt"><b>' + cnt + '</b><i style="width:' + pct + '%"></i></span>' : '') +
+        (cnt != null && q.k === 's' ? '<i class="sv-fill" style="width:' + pct + '%"></i><span class="sv-pct">' + pct + '%<small>' + cnt + ' קולות</small></span>' :
+         cnt != null ? '<span class="cnt"><b>' + cnt + '</b><i style="width:' + pct + '%"></i></span>' : '') +
         (opts && opts.reveal && (q.k === 's' ? false : j === q.c) ? '<span class="ok">' + A.icon('check') + '</span>' : '') +
         '</div>';
     }).join('') + '</div>';
