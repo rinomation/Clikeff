@@ -405,7 +405,21 @@
   /** בשניות האחרונות של שאלה: המוזיקה יורדת כדי שישמעו את הצפצופים */
   S.duck = (on) => { if (ducked === !!on) return; ducked = !!on; if (el && fileOn) fade(target(), 300); };
 
+  let pendingId = null, touchHooked = false;
+  function waitTouch(id) {
+    pendingId = id;
+    if (touchHooked) return;
+    touchHooked = true;
+    const go = () => {
+      touchHooked = false;
+      document.removeEventListener('pointerdown', go, true); document.removeEventListener('keydown', go, true);
+      const want = pendingId; pendingId = null;
+      if (want && !fileOn) { S.unlock(); S.playMusic(want); }
+    };
+    document.addEventListener('pointerdown', go, true); document.addEventListener('keydown', go, true);
+  }
   S.playMusic = (id) => {
+    pendingId = null;
     if (!FILES[id] && !TRACKS[id]) id = 'fun';
     if (!FILES[id] || failed[id] || !ensureEl()) { if (ctx) synth.play(SYNTH_OF(id)); return; }
     if (fileOn && fileTrack === id) return;
@@ -416,14 +430,17 @@
     try { el.currentTime = 0; } catch (e) { /* עוד לא נטען */ }
     el.volume = 0;
     const p = el.play();
-    if (p && p.then) p.then(() => fade(target(), 600)).catch(() => {
+    if (p && p.then) p.then(() => fade(target(), 600)).catch((err) => {
       if (fileTrack !== id || !fileOn) return;
-      failed[id] = true; fileOn = false;
+      fileOn = false;
+      if (err && err.name === 'NotAllowedError') { waitTouch(id); return; } /* מחכים לנגיעה */
+      failed[id] = true;
       if (ctx) synth.play(SYNTH_OF(id));
     });
     else fade(target(), 600);
   };
   S.stopMusic = () => {
+    pendingId = null;
     if (ctx) synth.stop();
     if (el && (fileOn || filePaused)) {
       fileOn = false; filePaused = false;

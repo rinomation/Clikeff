@@ -21,8 +21,10 @@
       roomCode: S.inSettings ? S.code : null
     });
   }
-  S.showSetup = () => { S.view = 'setup'; M.render('setup', setupData()); };
-  S.showHome = () => { S.view = 'home'; M.render('home', { license: S.license, owner: S.owner, name: S.owner ? null : (S.license && S.license.name) }); };
+  /* מוזיקה קלילה במסך הפתיחה ובהכנה (לא בזמן ניגון דוגמה) */
+  const homeMusic = () => { if (!S.playing) A.Sound.playMusic('chase'); };
+  S.showSetup = () => { S.view = 'setup'; M.render('setup', setupData()); homeMusic(); };
+  S.showHome = () => { S.view = 'home'; M.render('home', { license: S.license, owner: S.owner, name: S.owner ? null : (S.license && S.license.name) }); homeMusic(); };
   S.showLogin = (d) => { S.view = 'login'; M.user = null; M.render('login', Object.assign({ email: A.store.get('hostEmail', ''), form: true }, d || {})); };
   S.showNoLicense = (lic, email) => { S.view = 'nolicense'; M.render('noLicense', { lic, email }); };
 
@@ -60,7 +62,7 @@
       S.playing = id;
       A.Sound.preview(id, () => { S.playing = null; if (S.view === 'setup') S.showSetup(); });
     }
-    if (S.view === 'setup') S.showSetup();
+    if (S.view === 'setup') { M.render('setup', setupData()); if (!S.playing) homeMusic(); }
   };
 
   H.onFile = async (file) => {
