@@ -20,7 +20,9 @@
     });
   }
   S.showSetup = () => { S.view = 'setup'; M.render('setup', setupData()); };
-  S.showHome = () => { S.view = 'home'; M.render('home', {}); };
+  S.showHome = () => { S.view = 'home'; M.render('home', { license: S.license, owner: S.owner }); };
+  S.showLogin = (d) => { S.view = 'login'; M.user = null; M.render('login', Object.assign({ email: A.store.get('hostEmail', ''), form: true }, d || {})); };
+  S.showNoLicense = (lic, email) => { S.view = 'nolicense'; M.render('noLicense', { lic, email }); };
 
   let saveT = null;
   function saveCfg() {
@@ -196,6 +198,10 @@
   H['open-room'] = async (v, btn) => {
     A.Sound.unlock();
     A.Sound.stopPreview(); S.playing = null;
+    if (!S.owner) {
+      const lic = await A.Net.license().catch(() => null);
+      if (!A.Net.licenseOk(lic)) return S.showNoLicense(lic, M.user);
+    }
     if (S.cfg.source === 'file' && !(S.bank && S.bank.items.length)) {
       return A.toast('עוד לא נשמרו שאלות מקובץ. העלו קובץ או בחרו במאגר המובנה.', { type: 'bad', ms: 5000 });
     }
@@ -484,13 +490,60 @@
   H.export = () => A.Excel.exportResults(players(), (S.room.questions || []).length, S.code)
     .catch((e) => A.toast(e.message, { type: 'bad' }));
 
+  /* כניסה עם מייל וסיסמה */
+  H.login = async () => {
+    const email = (A.$('#login-email') || {}).value || '', pass = (A.$('#login-pass') || {}).value || '';
+    if (!email.trim() || !pass) return S.showLogin({ email, error: 'נא למלא מייל וסיסמה' });
+    const btn = A.$('#login-form [type=submit]'); if (btn) { btn.disabled = true; btn.textContent = 'מתחברים…'; }
+    try {
+      const u = await A.Net.signIn(email, pass);
+      A.store.set('hostEmail', email.trim());
+      await afterLogin(u);
+    } catch (e) { S.showLogin({ email, error: A.Net.authError(e) }); }
+  };
+  H.forgot = async () => {
+    const email = ((A.$('#login-email') || {}).value || '').trim();
+    if (!email) return S.showLogin({ error: 'כתבו את המייל שלכם, ואז לחצו שוב על "שכחתי סיסמה"' });
+    try { await A.Net.resetPassword(email); } catch (e) { if (!/user-not-found/.test(e.code || '')) return S.showLogin({ email, error: A.Net.authError(e) }); }
+    A.toast('אם המייל רשום אצלנו, נשלח אליו עכשיו קישור לבחירת סיסמה חדשה.', { type: 'ok', ms: 7000 });
+  };
+  H.logout = async () => {
+    if (S.code) detach(false);
+    A.store.del('hostRoom');
+    await A.Net.signOut().catch(() => {});
+    S.license = null; S.owner = false;
+    S.showLogin();
+  };
+
+  /** אחרי כניסה: בודקים מנוי, ואז ממשיכים כרגיל */
+  async function afterLogin(u) {
+    A.Net.useUser(u);
+    M.user = u.email;
+    S.owner = A.Net.isOwner(u);
+    S.license = null;
+    if (!S.owner) {
+      const lic = await A.Net.license().catch(() => null);
+      if (!A.Net.licenseOk(lic)) return S.showNoLicense(lic, u.email);
+      S.license = lic;
+    }
+    S.showHome();
+    return startHost();
+  }
+
   async function boot() {
     S.cfg = Object.assign(S.cfg, A.store.get('hostCfg', {}));
     S.bank = A.store.get('hostBank', null);
-    S.showHome();
     document.addEventListener('pointerdown', () => A.Sound.unlock(), { once: true });
+    M.render('login', { busy: true });
     try {
-      await A.Net.init();
+      const u = await A.Net.initAuth();
+      if (!u || u.isAnonymous) return S.showLogin();
+      await afterLogin(u);
+    } catch (e) { S.showLogin({ error: A.Net.errorText(e) }); }
+  }
+
+  async function startHost() {
+    try {
       const host = await A.Net.loadHost();
       if (host) {
         if (host.cfg) S.cfg = Object.assign(S.cfg, host.cfg);

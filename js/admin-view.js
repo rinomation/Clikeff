@@ -24,12 +24,13 @@
     '<a class="admin-brand" href="admin.html">' + A.logo('logo-sm') +
     '<h1><span class="sr-only">Clikeff</span><small>לוח המנחה</small></h1></a>' +
     '<span class="spacer"></span>' +
-    '<nav class="steps" aria-label="שלבי המשחק">' +
+    (d.step == null ? '' : '<nav class="steps" aria-label="שלבי המשחק">' +
     STEPS.map((s, i) => '<span class="' + (i < d.step ? 'is-done' : i === d.step ? 'is-current' : '') + '"' +
       (i === d.step ? ' aria-current="step"' : '') + '><i>' + (i < d.step ? '✓' : i + 1) + '</i>' + s + '</span>').join('') +
-    '</nav>' +
+    '</nav>') +
     '<span class="spacer"></span>' +
     '<div class="actions">' + A.theme.button() +
+    (d.user ? '<button class="icon-btn" type="button" data-action="logout" aria-label="יציאה מהחשבון" title="יציאה (' + esc(d.user) + ')">' + A.icon('door') + '</button>' : '') +
     '<button class="icon-btn" type="button" data-action="mute" aria-pressed="' + !!d.muted + '" aria-label="' + (d.muted ? 'הפעלת צליל' : 'השתקה') + '">' +
     A.icon(d.muted ? 'mute' : 'volume') + '</button></div>' +
     '</header>';
@@ -45,12 +46,60 @@
     '<p class="tagline" aria-label="לוחצים, נהנים, משחקים!"><span style="--i:0">לוחצים,</span> <span style="--i:1">נהנים,</span> <span style="--i:2">משחקים!</span></p>' +
     '<p class="home-sub">השאלה עולה על המסך הגדול, וכל אחד עונה בלחיצה מהמכשיר שלו.</p>' +
     '<button class="btn btn-accent btn-xl" type="button" data-action="go-setup">' + A.icon('sparkle') + 'פתיחת חידון חדש</button>' +
+    V.licenseLine(d) +
     '</div>' +
     '<div class="tapes" aria-hidden="true">' +
     [['פרשת השבוע', 'חנוכה', 'הלכות שבת', 'לוח הכפל', 'משניות', 'ארץ ישראל', 'ברכות', 'חזרה למבחן'],
       ['חגים ומועדים', 'נביאים', 'גדולי ישראל', 'מגילת אסתר', 'דקדוק', 'חשבון', 'בעלי חיים', 'מסיבת סיום']
     ].map((row, k) => { const t = row.map((w) => '<span>' + w + '</span>').join(''); return '<div class="tape tape-' + (k ? 'b' : 'a') + '"><div class="tape-row">' + t + t + '</div></div>'; }).join('') +
     '</div></section>';
+
+  /* ---------- מנוי ---------- */
+  V.fmtDate = (ms) => { const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
+  V.licenseLine = (d) => {
+    if (d.owner) return '<p class="lic-line">' + A.icon('check') + 'מנהלת המערכת · <a href="manage.html">לניהול המנויים</a></p>';
+    if (!d.license || !d.license.expires) return '';
+    const ms = d.license.expires.toMillis(), days = Math.ceil((ms - Date.now()) / 864e5);
+    return '<p class="lic-line' + (days <= 30 ? ' is-soon' : '') + '">' + A.icon(days <= 30 ? 'alert' : 'check') +
+      (days <= 30 ? 'המנוי מסתיים בעוד <b>' + days + '</b> ימים (' + V.fmtDate(ms) + ')' : 'המנוי בתוקף עד <b>' + V.fmtDate(ms) + '</b>') + '</p>';
+  };
+
+  /* ---------- כניסת מנחים ---------- */
+  V.login = (d) =>
+    '<section class="auth">' +
+    '<div class="auth-logo">' + A.logo('logo-lg', true) + '</div>' +
+    (d.busy && !d.form
+      ? '<div class="auth-wait"><span class="spinner"></span>מתחברים…</div>'
+      : '<form class="card auth-card" id="login-form" novalidate>' +
+        '<h2>כניסת מנחים</h2>' +
+        '<label class="field"><span class="field-label">מייל</span>' +
+        '<input class="input" id="login-email" type="email" autocomplete="username" dir="ltr" value="' + esc(d.email || '') + '" required></label>' +
+        '<label class="field"><span class="field-label">סיסמה</span>' +
+        '<input class="input" id="login-pass" type="password" autocomplete="current-password" dir="ltr" required></label>' +
+        '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
+        '<button class="btn btn-primary btn-lg btn-block" type="submit"' + (d.busy ? ' disabled' : '') + '>' + (d.busy ? 'מתחברים…' : 'כניסה') + '</button>' +
+        '<button class="link-btn auth-forgot" type="button" data-action="forgot">שכחתי סיסמה</button>' +
+        '</form>' +
+        '<p class="auth-note">עוד אין לכם מנוי? <a href="https://clikeff-site.vercel.app/#contact" target="_blank" rel="noopener">לרכישת מנוי שנתי</a></p>') +
+    '</section>';
+
+  /* ---------- המנוי לא פעיל ---------- */
+  V.noLicense = (d) => {
+    const lic = d.lic, ended = lic && lic.expires && lic.expires.toMillis() <= Date.now();
+    return '<section class="auth">' +
+      '<div class="card auth-card no-lic">' +
+      '<img src="' + A.img('hourglass_done') + '" alt="">' +
+      '<h2>' + (ended ? 'המנוי הסתיים' : 'המנוי לא פעיל') + '</h2>' +
+      '<p>' + (ended ? 'המנוי השנתי שלכם הסתיים ב-' + V.fmtDate(lic.expires.toMillis()) + '. כדי להמשיך לשחק, חדשו את המנוי.'
+        : lic ? 'המנוי של החשבון הזה הושהה. לפרטים צרו קשר.' : 'לחשבון ' + esc(d.email || '') + ' עדיין אין מנוי פעיל.') + '</p>' +
+      '<div class="lic-contact">' +
+      '<a class="btn btn-accent" href="https://wa.me/972542203441" target="_blank" rel="noopener">וואטסאפ 054-220-3441</a>' +
+      '<a class="btn btn-ghost" href="tel:+972504103847">050-410-3847</a>' +
+      '<a class="btn btn-ghost" href="mailto:rinatya3847@gmail.com">rinatya3847@gmail.com</a>' +
+      '</div>' +
+      '<button class="link-btn" type="button" data-action="logout">כניסה עם חשבון אחר</button>' +
+      '</div></section>';
+  };
 
   /* ---------- הכנה: שני שלבים בלשוניות ---------- */
   V.summary = (d) => {

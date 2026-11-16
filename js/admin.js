@@ -20,7 +20,13 @@
     M.data = data || M.data;
     const V = A.AdminView;
     const body = V[screen](M.data);
-    $('#app').innerHTML = V.header({ step: STEP[screen], muted: M.muted }) + body;
+    $('#app').innerHTML = V.header({ step: STEP[screen], muted: M.muted, user: M.user }) + body;
+    if (screen === 'login') {
+      const f = $('#login-form');
+      if (f) f.addEventListener('submit', (e) => { e.preventDefault(); if (M.handlers.login) M.handlers.login(); });
+      const em = $('#login-email'), pw = $('#login-pass');
+      if (em && !em.value) em.focus(); else if (pw) pw.focus();
+    }
     if (screen === 'setup') bindSetup();
     if (screen === 'results') A.$$('.podium .count').forEach((el, k) => setTimeout(() => A.countUp(el, Number(el.dataset.to) || 0, { ms: 1200 }), [1300, 1100, 900][k] || 900));
   };

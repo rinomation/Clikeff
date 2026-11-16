@@ -364,86 +364,95 @@
 
   /* =========================================================
      מוזיקה אמיתית מקבצים (Kevin MacLeod, incompetech.com, CC BY 4.0).
+     מתנגנת ישירות (לא דרך מנוע הצליל), כדי שתישמע בכל דפדפן.
      אם קובץ לא נטען (למשל סינון), חוזרים למוזיקה המסונתזת שלמעלה.
      ========================================================= */
-  const synth = { play: S.playMusic, stop: S.stopMusic, pause: S.pauseMusic, resume: S.resumeMusic, playing: S.musicPlaying };
+  const synth = { play: S.playMusic, stop: S.stopMusic, pause: S.pauseMusic, resume: S.resumeMusic, playing: S.musicPlaying, setMuted: S.setMuted };
   const FILES = { fun: 1, kids: 1, chase: 1, drama: 1, mystery: 1, cinema: 1 };
   const SYNTH_OF = (id) => (TRACKS[id] ? id : 'fun');
-  const LEVEL = 0.4;
-  let el = null, fileOn = false, filePaused = false, fileTrack = null;
+  const VOL = 0.5;
+  let el = null, fileOn = false, filePaused = false, fileTrack = null, fadeT = null;
   const failed = {};
   S.TRACK_IDS = Object.keys(FILES);
 
   function ensureEl() {
     if (el) return true;
-    if (!ctx || typeof Audio === 'undefined') return false;
-    try {
-      el = new Audio();
-      el.loop = true; el.preload = 'auto';
-      const src = ctx.createMediaElementSource(el);
-      const g = ctx.createGain(); g.gain.value = 0.85;
-      src.connect(g); g.connect(musicBus);
-      el.addEventListener('error', () => {
-        if (!fileTrack || !(fileOn || filePaused)) return;
-        failed[fileTrack] = true;
-        const t = fileTrack; fileOn = false; filePaused = false;
-        synth.play(SYNTH_OF(t));
-      });
-      return true;
-    } catch (e) { el = null; return false; }
+    if (typeof Audio === 'undefined') return false;
+    el = new Audio();
+    el.loop = true; el.preload = 'auto'; el.volume = 0;
+    el.addEventListener('error', () => {
+      if (!fileTrack || !(fileOn || filePaused)) return;
+      failed[fileTrack] = true;
+      const t = fileTrack; fileOn = false; filePaused = false;
+      if (ctx) synth.play(SYNTH_OF(t));
+    });
+    return true;
   }
-  function ramp(to, tc) {
-    musicBus.gain.cancelScheduledValues(ctx.currentTime);
-    musicBus.gain.setTargetAtTime(to, ctx.currentTime, tc);
-  }
-  function fileStop() {
+  /* עמעום רך של עוצמת הקול */
+  function fade(to, ms, done) {
+    clearInterval(fadeT);
     if (!el) return;
-    fileOn = false; filePaused = false;
-    setTimeout(() => { if (!fileOn && !filePaused) { try { el.pause(); } catch (e) { /* */ } } }, 250);
+    const from = el.volume, t0 = Date.now();
+    if (ms <= 0) { el.volume = to; if (done) done(); return; }
+    fadeT = setInterval(() => {
+      const k = Math.min(1, (Date.now() - t0) / ms);
+      el.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+      if (k >= 1) { clearInterval(fadeT); if (done) done(); }
+    }, 30);
   }
+  const target = () => (muted ? 0 : VOL);
 
   S.playMusic = (id) => {
-    if (!ctx) return;
     if (!FILES[id] && !TRACKS[id]) id = 'fun';
-    if (!FILES[id] || failed[id] || !ensureEl()) { fileStop(); return synth.play(SYNTH_OF(id)); }
+    if (!FILES[id] || failed[id] || !ensureEl()) { if (ctx) synth.play(SYNTH_OF(id)); return; }
     if (fileOn && fileTrack === id) return;
-    synth.stop();
+    if (ctx) synth.stop();
     fileTrack = id; fileOn = true; filePaused = false;
     const url = 'assets/music/' + id + '.mp3';
     if (el.getAttribute('src') !== url) el.setAttribute('src', url);
     try { el.currentTime = 0; } catch (e) { /* עוד לא נטען */ }
-    musicBus.gain.cancelScheduledValues(ctx.currentTime);
-    musicBus.gain.setValueAtTime(0, ctx.currentTime);
-    musicBus.gain.setTargetAtTime(LEVEL, ctx.currentTime + 0.05, 0.2);
+    el.volume = 0;
     const p = el.play();
-    if (p && p.catch) p.catch(() => {
+    if (p && p.then) p.then(() => fade(target(), 600)).catch(() => {
       if (fileTrack !== id || !fileOn) return;
       failed[id] = true; fileOn = false;
-      synth.play(SYNTH_OF(id));
+      if (ctx) synth.play(SYNTH_OF(id));
     });
+    else fade(target(), 600);
   };
   S.stopMusic = () => {
-    synth.stop();
-    if (fileOn || filePaused) { if (ctx) ramp(0, 0.06); fileStop(); setTimeout(() => { if (!fileOn && musicBus) musicBus.gain.value = LEVEL; }, 450); }
+    if (ctx) synth.stop();
+    if (el && (fileOn || filePaused)) {
+      fileOn = false; filePaused = false;
+      fade(0, 250, () => { if (!fileOn && !filePaused) el.pause(); });
+    }
   };
   S.pauseMusic = () => {
     if (fileOn) {
       fileOn = false; filePaused = true;
-      ramp(0, 0.04);
-      setTimeout(() => { if (filePaused) { try { el.pause(); } catch (e) { /* */ } } }, 180);
+      fade(0, 150, () => { if (filePaused) el.pause(); });
       return true;
     }
-    return synth.pause();
+    return ctx ? synth.pause() : false;
   };
   S.resumeMusic = () => {
     if (filePaused && fileTrack && el) {
       filePaused = false; fileOn = true;
       const p = el.play(); if (p && p.catch) p.catch(() => {});
-      ramp(LEVEL, 0.12);
+      fade(target(), 400);
       return;
     }
-    synth.resume();
+    if (ctx) synth.resume();
   };
-  S.musicPlaying = () => fileOn || synth.playing();
+  S.musicPlaying = () => fileOn || (ctx ? synth.playing() : false);
+  S.setMuted = (m) => {
+    synth.setMuted(m);
+    if (el && fileOn) fade(target(), 120);
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (!el || !fileOn) return;
+    if (document.hidden) el.pause();
+    else { const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+  });
 
 })(window.App);

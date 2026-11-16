@@ -4,6 +4,8 @@ rules_version = '2';
 // * רק המנהל שיצר חדר יכול לשנות אותו.
 // * משתתף יכול לכתוב רק את הרשומה של עצמו, עם שדות ומגבלות קבועים.
 // * משתתף קורא רק את מסמך החדר ואת הרשומה שלו; המנהל קורא את כל המשתתפים.
+// * פתיחת חדר רק למנחה עם מנוי בתוקף (licenses), או למנהלת המערכת.
+// * את המנויים יוצרת ומעדכנת רק מנהלת המערכת (מייל מאומת).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -11,6 +13,25 @@ service cloud.firestore {
     function me() { return request.auth.uid; }
     function roomData(code) { return get(/databases/$(database)/documents/rooms/$(code)).data; }
     function isHost(code) { return signedIn() && roomData(code).hostUid == me(); }
+
+    // מנהלת המערכת: רק עם המייל הזה, ורק אחרי אימות המייל
+    function isOwner() {
+      return signedIn() && request.auth.token.email == 'rinatya3847@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    function licPath() { return /databases/$(database)/documents/licenses/$(me()); }
+    function licensed() {
+      return isOwner() || (signedIn() && exists(licPath())
+        && get(licPath()).data.active == true
+        && get(licPath()).data.expires > request.time);
+    }
+
+    // מנויים: כל מנחה קורא רק את שלו. רק המנהלת כותבת.
+    match /licenses/{id} {
+      allow get: if isOwner() || (signedIn() && me() == id);
+      allow list: if isOwner();
+      allow create, update, delete: if isOwner();
+    }
 
     // הגדרות ומאגר שאלות של מנהל
     match /hosts/{hostId} {
@@ -30,8 +51,9 @@ service cloud.firestore {
 
       allow get: if signedIn();
       allow list: if false;
-      allow create: if signedIn() && code.matches('^[0-9]{6}$') && validRoom(request.resource.data);
-      allow update: if signedIn() && resource.data.hostUid == me() && validRoom(request.resource.data);
+      allow create: if signedIn() && code.matches('^[0-9]{6}$') && validRoom(request.resource.data) && licensed();
+      allow update: if signedIn() && resource.data.hostUid == me() && validRoom(request.resource.data)
+        && (licensed() || request.resource.data.status == 'closed');
       allow delete: if signedIn() && resource.data.hostUid == me();
 
       match /players/{playerId} {

@@ -92,6 +92,12 @@
   R.set = (path, data, opts) => R.commit([writeOf(path, data, opts)]);
   R.del = (path) => R.commit([R.delOf(path)]);
 
+  /** כל המסמכים באוסף (עד 300) */
+  R.list = async (coll) => {
+    const d = await call('GET', ROOT + '/' + coll + '?pageSize=300');
+    return ((d && d.documents) || []).map((doc) => Object.assign({ id: doc.name.split('/').pop() }, decFields(doc.fields)));
+  };
+
   /** שאילתה על תת-אוסף: parent = 'rooms/123456', coll = 'players', since = מילישניות */
   R.query = async (parent, coll, since) => {
     const q = { from: [{ collectionId: coll }] };

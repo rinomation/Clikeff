@@ -26,6 +26,43 @@
   };
   N.uid = () => uid;
 
+  /* ================= חשבון מנחה: מייל וסיסמה + מנוי ================= */
+  N.OWNER = 'rinatya3847@gmail.com';
+  let authReady = null;
+  /** אתחול בלי כניסה אנונימית. מחזיר את המשתמש הנוכחי, או null */
+  N.initAuth = () => {
+    if (authReady) return authReady;
+    authReady = new Promise((resolve, reject) => {
+      if (!window.firebase || !window.FIREBASE_CONFIG) return reject(new Error('NO_SDK'));
+      if (!firebase.apps.length) firebase.initializeApp(window.FIREBASE_CONFIG);
+      R.init(window.FIREBASE_CONFIG.projectId);
+      const off = firebase.auth().onAuthStateChanged((u) => { off(); resolve(u || null); });
+    });
+    return authReady;
+  };
+  N.useUser = (u) => { uid = u ? u.uid : null; ready = u ? Promise.resolve(uid) : null; };
+  N.user = () => (window.firebase && firebase.apps.length ? firebase.auth().currentUser : null);
+  N.isOwner = (u) => !!u && !u.isAnonymous && String(u.email || '').toLowerCase() === N.OWNER && !!u.emailVerified;
+  N.signIn = (email, pass) => firebase.auth().signInWithEmailAndPassword(String(email).trim(), pass).then((c) => c.user);
+  N.signUp = (email, pass) => firebase.auth().createUserWithEmailAndPassword(String(email).trim(), pass).then((c) => c.user);
+  N.signOut = () => firebase.auth().signOut().then(() => { uid = null; ready = null; });
+  N.resetPassword = (email) => { firebase.auth().languageCode = 'he'; return firebase.auth().sendPasswordResetEmail(String(email).trim()); };
+  N.sendVerify = () => { firebase.auth().languageCode = 'he'; return firebase.auth().currentUser.sendEmailVerification(); };
+  N.license = () => R.get('licenses/' + uid);
+  N.licenseOk = (lic) => !!lic && lic.active !== false && !!lic.expires && lic.expires.toMillis() > Date.now();
+  N.authError = (e) => {
+    const c = (e && (e.code || e.message)) || '';
+    if (/wrong-password|invalid-credential|user-not-found|INVALID_LOGIN/.test(c)) return 'המייל או הסיסמה לא נכונים.';
+    if (/invalid-email/.test(c)) return 'כתובת המייל לא תקינה.';
+    if (/too-many-requests/.test(c)) return 'היו יותר מדי ניסיונות. חכו כמה דקות ונסו שוב.';
+    if (/email-already-in-use/.test(c)) return 'המייל הזה כבר רשום במערכת.';
+    if (/weak-password/.test(c)) return 'הסיסמה קצרה מדי. צריך לפחות 6 תווים.';
+    if (/user-disabled/.test(c)) return 'החשבון הזה הושבת.';
+    if (/operation-not-allowed/.test(c)) return 'הכניסה עם מייל וסיסמה לא הופעלה בפיירבייס.';
+    if (/network/i.test(c)) return 'אין חיבור לשרת. בדקו את האינטרנט ונסו שוב.';
+    return N.errorText(e);
+  };
+
   N.errorText = (e) => {
     const c = (e && (e.code || e.message)) || '';
     if (c === 'NO_SDK') return 'לא הצלחנו לטעון את רכיבי המשחק. בדקו את החיבור לאינטרנט ורעננו.';

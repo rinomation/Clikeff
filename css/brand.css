@@ -416,3 +416,32 @@ body:has(.stage-clock.is-urgent)::after { content: ""; position: fixed; inset: 0
 .team-col .p-bub bdi { font-size: 1rem; }
 
 .music-credit { margin-top: 10px; font-size: .78rem; opacity: .75; }
+
+/* =========================================================
+   כניסת מנחים ומנוי
+   ========================================================= */
+.auth { min-height: calc(100vh - 80px); display: grid; place-items: center; align-content: center; gap: 22px; padding: 30px 16px 50px; }
+.auth-logo { width: min(340px, 80vw); }
+.auth-logo .logo { width: 100%; }
+.auth-card { width: min(440px, 100%); display: grid; gap: 4px; padding: 30px 28px 24px; }
+.auth-card h2 { font-size: 1.7rem; font-weight: 900; text-align: center; margin-bottom: 14px; }
+.auth-card .input[dir="ltr"] { text-align: left; }
+.auth-forgot { justify-self: center; margin-top: 12px; }
+.auth-note { color: var(--text-soft); font-size: .95rem; }
+.auth-note a { color: var(--cyan); font-weight: 700; }
+.auth-wait { display: flex; align-items: center; gap: 12px; color: var(--text-soft); font-weight: 600; }
+.no-lic { justify-items: center; text-align: center; gap: 12px; }
+.no-lic img { width: 84px; height: 84px; animation: wiggle 2s ease-in-out infinite; }
+.no-lic p { color: var(--text-soft); max-width: 32ch; }
+.lic-contact { display: grid; gap: 8px; width: 100%; margin-top: 6px; }
+.lic-contact .btn { width: 100%; }
+.lic-contact a[href^="mailto"], .lic-contact a[href^="tel"] { direction: ltr; }
+.lic-line { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; padding: 7px 16px; border-radius: 999px; background: rgba(43, 217, 138, .1); color: var(--text-soft); font-size: .95rem; }
+.lic-line svg { width: 18px; height: 18px; color: var(--ok); }
+.lic-line b { color: var(--text); }
+.lic-line a { color: var(--cyan); font-weight: 700; }
+.lic-line.is-soon { background: rgba(255, 176, 32, .12); }
+.lic-line.is-soon svg { color: var(--amber); }
+
+.form-error svg { width: 18px; height: 18px; flex: none; }
+.auth-card .form-error { justify-content: center; text-align: center; }
