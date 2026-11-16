@@ -299,7 +299,7 @@
             '</dl>' +
             '<div class="m-acts">' +
             '<button class="btn btn-primary btn-sm" type="button" data-action="renew" data-value="' + esc(l.id) + '">' + ic('reset') + 'חידוש לשנה</button>' +
-            (l.pass ? '<button class="btn btn-ghost btn-sm" type="button" data-action="resend" data-value="' + esc(l.id) + '">' + ic('send') + 'שליחת הפרטים</button>' : '') +
+            (l.pass ? '<button class="btn btn-ghost btn-sm" type="button" data-action="resend" data-value="' + esc(l.id) + '">' + ic('copy') + 'נוסח להעתקה</button>' : '') +
             '<button class="btn btn-ghost btn-sm" type="button" data-action="edit" data-value="' + esc(l.id) + '">' + ic('edit') + 'עריכה</button>' +
             '<button class="btn btn-ghost btn-sm" type="button" data-action="reset" data-value="' + esc(l.id) + '">' + ic('mail') + 'מייל לסיסמה חדשה</button>' +
             '<button class="btn btn-ghost btn-sm m-danger" type="button" data-action="toggle" data-value="' + esc(l.id) + '">' + (l.active === false ? 'הפעלה מחדש' : 'עצירת המנוי') + '</button>' +
