@@ -10,6 +10,8 @@
 
   const fmt = (ms) => { const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
   const daysLeft = (ms) => Math.ceil((ms - Date.now()) / 864e5);
+  /** 050-1234567 → 972501234567 (לקישור וואטסאפ) */
+  const waNum = (p) => { p = String(p || '').replace(/[^0-9]/g, ''); return p.startsWith('0') ? '972' + p.slice(1) : p; };
   const expMs = (l) => (l.expires && l.expires.toMillis ? l.expires.toMillis() : 0);
 
   /** סיסמה קריאה, למשל Kfmr-4827 (בלי תווים שמתבלבלים) */
@@ -116,6 +118,7 @@
       '<h3 class="card-title">' + A.icon('sparkle') + 'לקוח חדש</h3>' +
       '<label class="field"><span class="field-label">שם הלקוח או המוסד</span><input class="input" id="n-name" maxlength="60" placeholder="למשל: תלמוד תורה נועם התורה" value="' + esc(d.name || '') + '"></label>' +
       '<label class="field"><span class="field-label">המייל שאיתו הלקוח יתחבר</span><input class="input" id="n-email" type="email" dir="ltr" placeholder="name@example.com" value="' + esc(d.email || '') + '"></label>' +
+      '<label class="field"><span class="field-label">מספר לוואטסאפ <small>(לא חובה)</small></span><input class="input" id="n-phone" type="tel" dir="ltr" placeholder="05X-XXX-XXXX" value="' + esc(d.phone || '') + '"></label>' +
       '<label class="field"><span class="field-label">תקופה</span><select class="input" id="n-months">' +
       [[12, 'שנה'], [24, 'שנתיים'], [6, 'חצי שנה'], [3, 'שלושה חודשים'], [1, 'חודש']].map((m) => '<option value="' + m[0] + '"' + ((d.months || 12) === m[0] ? ' selected' : '') + '>' + m[1] + '</option>').join('') +
       '</select></label>' +
@@ -133,7 +136,7 @@
         '<dt>בתוקף עד</dt><dd>' + fmt(x.expires) + '</dd></dl>' +
         '<div class="m-share">' +
         '<button class="btn btn-primary" type="button" data-action="copy">' + A.icon('copy') + 'העתקת ההודעה</button>' +
-        '<a class="btn btn-ghost" href="https://wa.me/?text=' + encodeURIComponent(message(x)) + '" target="_blank" rel="noopener">שליחה בוואטסאפ</a>' +
+        '<a class="btn btn-ghost" href="https://wa.me/' + waNum(x.phone) + '?text=' + encodeURIComponent(message(x)) + '" target="_blank" rel="noopener">שליחה בוואטסאפ</a>' +
         '<a class="btn btn-ghost" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent('המנוי שלך ל-Clikeff') + '&body=' + encodeURIComponent(message(x)) + '">שליחה במייל</a>' +
         '</div></div>'
         : '<div class="card m-help"><h3 class="card-title">' + A.icon('alert') + 'איך זה עובד</h3>' +
@@ -147,7 +150,7 @@
       (rows.length ? '<div class="m-rows">' + rows.map((l) => {
         const s = statusOf(l);
         return '<div class="m-row">' +
-          '<div class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><span dir="ltr">' + esc(l.email || '') + '</span></div>' +
+          '<div class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><span dir="ltr">' + esc(l.email || '') + (l.phone ? ' · <a href="https://wa.me/' + waNum(l.phone) + '" target="_blank" rel="noopener">' + esc(l.phone) + '</a>' : '') + '</span></div>' +
           '<div class="m-exp"><span class="m-badge ' + s[0] + '">' + s[1] + '</span><small>עד ' + fmt(expMs(l)) + '</small></div>' +
           '<div class="m-acts">' +
           '<button class="btn btn-sm btn-primary" type="button" data-action="renew" data-value="' + esc(l.id) + '">חידוש לשנה</button>' +
@@ -206,7 +209,8 @@
 
   async function doCreate() {
     const name = $('#n-name').value.trim(), email = $('#n-email').value.trim().toLowerCase(), months = Number($('#n-months').value) || 12;
-    const keep = { name, email, months };
+    const phone = $('#n-phone').value.replace(/[^0-9+]/g, '');
+    const keep = { name, email, months, phone };
     if (!name) return viewDash(Object.assign(keep, { error: 'נא לכתוב את שם הלקוח' }));
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return viewDash(Object.assign(keep, { error: 'כתובת המייל לא נראית תקינה' }));
     viewDash(Object.assign({ busy: true }, keep));
@@ -225,13 +229,13 @@
       return viewDash(Object.assign(keep, { error: msg }));
     }
     const exp = new Date(); exp.setMonth(exp.getMonth() + months);
-    const doc = { name, email, active: true, expires: exp, months, createdAt: R.NOW, updatedAt: R.NOW };
+    const doc = { name, email, phone, active: true, expires: exp, months, createdAt: R.NOW, updatedAt: R.NOW };
     let ok = false;
     for (let t = 0; t < 3 && !ok; t++) {
       try { await R.set('licenses/' + newUid, doc); ok = true; } catch (e) { await new Promise((r) => setTimeout(r, 800)); }
     }
     if (!ok) return viewDash(Object.assign(keep, { error: 'החשבון נוצר אבל המנוי לא נשמר. שמרי את הסיסמה ' + pass + ' ונסי שוב בעוד רגע.' }));
-    st.last = { name, email, pass, expires: exp.getTime() };
+    st.last = { name, email, pass, phone, expires: exp.getTime() };
     await loadList();
     viewDash();
     A.toast('המנוי נוצר!', { type: 'ok' });

@@ -39,3 +39,5 @@
   .m-exp { justify-items: start; }
   .m-acts { justify-content: flex-start; }
 }
+.m-who a { color: var(--ok); font-weight: 700; }
+.field-label small { color: var(--text-mute); font-weight: 500; }

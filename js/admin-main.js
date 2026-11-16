@@ -4,6 +4,7 @@
   const M = A.Admin;
   const S = (A.AdminMain = {
     cfg: { duration: 15, track: 'fun', showRank: false, source: 'builtin', mode: 'sync' },
+    defaults: { duration: 15, track: 'fun', showRank: false, source: 'builtin', mode: 'sync' },
     bank: null,        /* { title, items, updated } */
     preview: null,     /* תצוגה מקדימה לפני שמירה */
     code: null, room: null, players: [],
@@ -511,12 +512,20 @@
     if (S.code) detach(false);
     A.store.del('hostRoom');
     await A.Net.signOut().catch(() => {});
+    ['hostBank', 'hostCfg', 'hostRoom', 'hostUid'].forEach((k) => A.store.del(k));
+    S.bank = null; S.cfg = Object.assign({}, S.defaults);
     S.license = null; S.owner = false;
     S.showLogin();
   };
 
   /** אחרי כניסה: בודקים מנוי, ואז ממשיכים כרגיל */
   async function afterLogin(u) {
+    /* מחשב משותף: כל חשבון רואה רק את השאלות וההגדרות שלו */
+    if (A.store.get('hostUid', null) !== u.uid) {
+      ['hostBank', 'hostCfg', 'hostRoom'].forEach((k) => A.store.del(k));
+      S.bank = null; S.cfg = Object.assign({}, S.defaults);
+      A.store.set('hostUid', u.uid);
+    }
     A.Net.useUser(u);
     M.user = u.email;
     S.owner = A.Net.isOwner(u);
