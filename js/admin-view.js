@@ -88,14 +88,13 @@
     '<section class="auth">' +
     '<div class="auth-logo">' + A.logo('logo-lg', true) + '</div>' +
     '<form class="card auth-card" id="reset-form" novalidate>' +
-    '<h2>בחירת סיסמה חדשה</h2>' +
+    '<h2>הסיסמה החדשה שלכם</h2>' +
     (d.email ? '<p class="auth-sub">לחשבון <bdi>' + esc(d.email) + '</bdi></p>' : '') +
-    '<label class="field"><span class="field-label">סיסמה חדשה (לפחות 6 תווים)</span>' +
-    '<input class="input" id="reset-pass" type="password" dir="ltr" autocomplete="new-password"></label>' +
-    '<label class="field"><span class="field-label">שוב את הסיסמה</span>' +
-    '<input class="input" id="reset-pass2" type="password" dir="ltr" autocomplete="new-password"></label>' +
+    '<code class="new-pass" dir="ltr">' + esc(d.pass || '') + '</code>' +
+    '<button class="btn btn-ghost btn-block" type="button" data-action="copy-pass">' + A.icon('copy') + 'העתקת הסיסמה</button>' +
+    '<p class="auth-sub" style="margin:10px 0 0">כדאי לשמור אותה. אם תשכחו, אפשר לבקש אותה מהמנהלת.</p>' +
     '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
-    '<button class="btn btn-primary btn-lg btn-block" type="submit">שמירת הסיסמה</button>' +
+    '<button class="btn btn-primary btn-lg btn-block" type="submit"' + (d.busy ? ' disabled' : '') + '>' + (d.busy ? 'שומרים…' : 'שמירה וכניסה') + '</button>' +
     '</form></section>';
 
   /* ---------- המנוי לא פעיל ---------- */

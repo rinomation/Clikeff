@@ -24,7 +24,6 @@
     if (screen === 'resetPw') {
       const f = $('#reset-form');
       if (f) f.addEventListener('submit', (e) => { e.preventDefault(); if (M.handlers.resetSave) M.handlers.resetSave(); });
-      const pw = $('#reset-pass'); if (pw) pw.focus();
     }
     if (screen === 'login') {
       const f = $('#login-form');
@@ -83,6 +82,12 @@
       M.muted = !M.muted; A.store.set('muted', M.muted);
       if (A.Sound) A.Sound.setMuted(M.muted);
       M.render(M.screen); return;
+    }
+    if (act === 'copy-pass') {
+      const t = (M.data && M.data.pass) || '';
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+        .then(() => A.toast('הסיסמה הועתקה', { type: 'ok' })).catch(() => A.toast(t));
+      return;
     }
     if (act === 'preview-track') e.preventDefault(); /* לא לבחור את הרצועה בלחיצה על "נגן" */
     if (act === 'copy-link') {

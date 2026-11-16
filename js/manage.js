@@ -6,7 +6,7 @@
   'use strict';
   const N = A.Net, R = A.FsRest, $ = A.$, esc = A.esc;
   const GAME_URL = 'https://clikeff.vercel.app/admin';
-  const st = { user: null, list: [], q: '', last: null, mode: 'signin' };
+  const st = { user: null, list: [], q: '', last: null, mode: 'signin', shown: {} };
 
   const fmt = (ms) => { const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
   const daysLeft = (ms) => Math.ceil((ms - Date.now()) / 864e5);
@@ -14,16 +14,7 @@
   const waNum = (p) => { p = String(p || '').replace(/[^0-9]/g, ''); return p.startsWith('0') ? '972' + p.slice(1) : p; };
   const expMs = (l) => (l.expires && l.expires.toMillis ? l.expires.toMillis() : 0);
 
-  /** סיסמה קריאה, למשל Kfmr-4827 (בלי תווים שמתבלבלים) */
-  function genPass() {
-    const L = 'abcdefghjkmnpqrstuvwxyz', D = '23456789', r = new Uint32Array(8);
-    crypto.getRandomValues(r);
-    let s = '';
-    for (let i = 0; i < 4; i++) s += L[r[i] % L.length];
-    s = s[0].toUpperCase() + s.slice(1) + '-';
-    for (let i = 4; i < 8; i++) s += D[r[i] % D.length];
-    return s;
-  }
+  const genPass = N.genPass;
 
   /* ---------- תצוגה ---------- */
   function header() {
@@ -164,10 +155,15 @@
         return '<div class="m-row">' +
           '<div class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><span dir="ltr">' + esc(l.email || '') + (l.phone ? ' · <a href="https://wa.me/' + waNum(l.phone) + '" target="_blank" rel="noopener">' + esc(l.phone) + '</a>' : '') + '</span></div>' +
           '<div class="m-exp"><span class="m-badge ' + s[0] + '">' + s[1] + '</span><small>עד ' + fmt(expMs(l)) + '</small></div>' +
+          '<div class="m-pass">' + (l.pass
+            ? (st.shown[l.id] ? '<code dir="ltr">' + esc(l.pass) + '</code>' : '<code>••••••••</code>') +
+              '<button class="link-btn" type="button" data-action="show-pass" data-value="' + esc(l.id) + '">' + (st.shown[l.id] ? 'הסתרה' : 'הצגת סיסמה') + '</button>'
+            : '<small>אין סיסמה שמורה</small>') + '</div>' +
           '<div class="m-acts">' +
           '<button class="btn btn-sm btn-primary" type="button" data-action="renew" data-value="' + esc(l.id) + '">חידוש לשנה</button>' +
           '<button class="btn btn-sm btn-ghost" type="button" data-action="toggle" data-value="' + esc(l.id) + '">' + (l.active === false ? 'הפעלה' : 'עצירה') + '</button>' +
-          '<button class="btn btn-sm btn-ghost" type="button" data-action="reset" data-value="' + esc(l.id) + '">איפוס סיסמה</button>' +
+          (l.pass ? '<button class="btn btn-sm btn-ghost" type="button" data-action="resend" data-value="' + esc(l.id) + '">שליחת הפרטים</button>' : '') +
+          '<button class="btn btn-sm btn-ghost" type="button" data-action="reset" data-value="' + esc(l.id) + '">מייל לסיסמה חדשה</button>' +
           '</div></div>';
       }).join('') + '</div>'
         : '<p class="m-empty">' + (st.list.length ? 'לא נמצאו לקוחות בחיפוש הזה.' : 'עוד אין לקוחות. הלקוח הראשון בדרך!') + '</p>') +
@@ -245,7 +241,7 @@
       return viewDash(Object.assign(keep, { error: msg }));
     }
     const exp = new Date(); exp.setMonth(exp.getMonth() + months);
-    const doc = { name, email, phone, active: true, expires: exp, months, createdAt: R.NOW, updatedAt: R.NOW };
+    const doc = { name, email, phone, pass, passAt: R.NOW, active: true, expires: exp, months, createdAt: R.NOW, updatedAt: R.NOW };
     let ok = false;
     for (let t = 0; t < 3 && !ok; t++) {
       try { await R.set('licenses/' + newUid, doc); ok = true; } catch (e) { await new Promise((r) => setTimeout(r, 800)); }
@@ -318,6 +314,13 @@
       return;
     }
     if (act === 'retry') { try { await st.user.getIdToken(true); } catch (err) { /* */ } return route(); }
+    if (act === 'show-pass') { st.shown[v] = !st.shown[v]; return viewDash(); }
+    if (act === 'resend') {
+      const l = st.list.find((x) => x.id === v); if (!l) return;
+      st.last = { name: l.name || '', email: l.email, pass: l.pass, phone: l.phone, expires: expMs(l) };
+      viewDash(); window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     if (act === 'renew') return renew(v);
     if (act === 'toggle') return toggle(v);
     if (act === 'reset') return resetPw(v);

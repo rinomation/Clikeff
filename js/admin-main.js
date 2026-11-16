@@ -545,8 +545,8 @@
     if (act.mode === 'resetPassword') {
       try {
         const email = await A.Net.checkResetCode(act.code);
-        S.reset = { code: act.code, email };
-        S.view = 'reset'; M.render('resetPw', { email });
+        S.reset = { code: act.code, email, pass: A.Net.genPass() };
+        S.view = 'reset'; M.render('resetPw', { email, pass: S.reset.pass });
       } catch (e) { clean(); S.showLogin({ error: 'הקישור לבחירת סיסמה כבר לא בתוקף. לחצו שוב על "שכחתי סיסמה".' }); }
       return;
     }
@@ -559,17 +559,21 @@
     return afterLogin(u);
   }
   H.resetSave = async () => {
-    const p1 = (A.$('#reset-pass') || {}).value || '', p2 = (A.$('#reset-pass2') || {}).value || '';
-    const email = S.reset && S.reset.email;
-    if (p1.length < 6) return M.render('resetPw', { email, error: 'הסיסמה צריכה להיות לפחות 6 תווים' });
-    if (p1 !== p2) return M.render('resetPw', { email, error: 'שתי הסיסמאות לא זהות' });
+    if (!S.reset) return S.showLogin();
+    const { code, email, pass } = S.reset;
+    M.render('resetPw', { email, pass, busy: true });
+    try { await A.Net.confirmReset(code, pass); }
+    catch (e) { return M.render('resetPw', { email, pass, error: A.Net.authError(e) }); }
+    history.replaceState(null, '', location.pathname);
+    A.store.set('hostEmail', email);
+    S.reset = null;
     try {
-      await A.Net.confirmReset(S.reset.code, p1);
-      history.replaceState(null, '', location.pathname);
-      A.store.set('hostEmail', email);
-      A.toast('הסיסמה עודכנה! אפשר להיכנס.', { type: 'ok', ms: 6000 });
-      S.showLogin({ email });
-    } catch (e) { M.render('resetPw', { email, error: A.Net.authError(e) }); }
+      const u = await A.Net.signIn(email, pass);
+      A.Net.useUser(u);
+      await A.Net.savePass(pass).catch(() => {}); /* נשמר אצל המנהלת */
+      A.toast('הסיסמה עודכנה!', { type: 'ok' });
+      return afterLogin(u);
+    } catch (e) { A.toast('הסיסמה עודכנה. אפשר להיכנס איתה.', { type: 'ok', ms: 6000 }); S.showLogin({ email }); }
   };
 
   async function boot() {

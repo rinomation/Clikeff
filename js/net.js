@@ -58,6 +58,18 @@
   N.resetPassword = (email) => { firebase.auth().languageCode = 'he'; return firebase.auth().sendPasswordResetEmail(String(email).trim()); };
   N.sendVerify = () => { firebase.auth().languageCode = 'he'; return firebase.auth().currentUser.sendEmailVerification(); };
   N.license = () => R.get('licenses/' + uid);
+  /** סיסמה קריאה, למשל Kfmr-4827 (בלי תווים שמתבלבלים) */
+  N.genPass = () => {
+    const L = 'abcdefghjkmnpqrstuvwxyz', D = '23456789', r = new Uint32Array(8);
+    crypto.getRandomValues(r);
+    let s = '';
+    for (let i = 0; i < 4; i++) s += L[r[i] % L.length];
+    s = s[0].toUpperCase() + s.slice(1) + '-';
+    for (let i = 4; i < 8; i++) s += D[r[i] % D.length];
+    return s;
+  };
+  /** שומר אצל המנהלת את הסיסמה החדשה שהמערכת יצרה ללקוח */
+  N.savePass = (pass) => R.set('licenses/' + uid, { pass, passAt: R.NOW }, { merge: true });
   N.licenseOk = (lic) => !!lic && lic.active !== false && !!lic.expires && lic.expires.toMillis() > Date.now();
   N.authError = (e) => {
     const c = (e && (e.code || e.message)) || '';

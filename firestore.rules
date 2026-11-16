@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // מנהלת המערכת: לפי מספר החשבון הקבוע שלה
     function isOwner() {
-      return signedIn() && me() == 'OWNER_UID';
+      return signedIn() && me() == 'MBW1LhCT61ZxnjvhxnjKJnHjuPN2';
     }
     function licPath() { return /databases/$(database)/documents/licenses/$(me()); }
     function licensed() {
@@ -25,11 +25,15 @@ service cloud.firestore {
         && get(licPath()).data.expires > request.time);
     }
 
-    // מנויים: כל מנחה קורא רק את שלו. רק המנהלת כותבת.
+    // מנויים: כל מנחה קורא רק את שלו. רק המנהלת יוצרת ומשנה תוקף.
+    // הלקוח עצמו יכול לעדכן רק את הסיסמה שהמערכת יצרה לו (pass, passAt).
     match /licenses/{id} {
       allow get: if isOwner() || (signedIn() && me() == id);
       allow list: if isOwner();
-      allow create, update, delete: if isOwner();
+      allow create, delete: if isOwner();
+      allow update: if isOwner() || (signedIn() && me() == id
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pass', 'passAt'])
+        && request.resource.data.pass is string && request.resource.data.pass.size() <= 40);
     }
 
     // הגדרות ומאגר שאלות של מנהל
