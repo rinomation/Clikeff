@@ -7,12 +7,14 @@
   const V = (A.AdminView = {});
 
   V.TRACKS = [
-    { id: 'fun', name: 'שעשועון', desc: 'קצבי ושמח', img: 'party_popper' },
-    { id: 'kids', name: 'שובבי', desc: 'קליל ומצחיק', img: 'monkey_face' },
-    { id: 'chase', name: 'חגיגה', desc: 'פולקה מהירה', img: 'balloon' },
-    { id: 'drama', name: 'מתח קליל', desc: 'על קצות האצבעות', img: 'hourglass_not_done' },
-    { id: 'mystery', name: 'סקרנות', desc: 'מסתורי ושקט', img: 'owl' },
-    { id: 'cinema', name: 'רגוע', desc: 'נעים ונינוח', img: 'rainbow' }
+    { id: 'fun', name: 'משחק מחשב', desc: 'צלילי משחק קלאסי', img: 'video_game' },
+    { id: 'kids', name: 'הרפתקה', desc: 'קופצני ושובב', img: 'rocket' },
+    { id: 'hero', name: 'גיבורים', desc: 'אנרגטי ומלא כוח', img: 'glowing_star' },
+    { id: 'groove', name: 'קצבי', desc: 'גרוב בקצב נעים', img: 'speaker_high_volume' },
+    { id: 'cinema', name: 'זורם', desc: 'רגוע וזורם', img: 'rainbow' },
+    { id: 'chase', name: 'שמח ומהיר', desc: 'קופצני ומלא אור', img: 'party_popper' },
+    { id: 'drama', name: 'אקשן', desc: 'מהיר ומותח', img: 'fire' },
+    { id: 'mystery', name: 'גמר גדול', desc: 'דרמטי ומרשים', img: 'crown' }
   ];
   V.track = (id) => V.TRACKS.find((t) => t.id === id) || V.TRACKS[0];
 
@@ -374,7 +376,7 @@
         '<span class="t-meta"><b>' + t.name + '</b><span>' + t.desc + '</span></span>' +
         '<button type="button" class="play' + (d.playing === t.id ? ' is-playing' : '') + '" data-action="preview-track" data-value="' + t.id + '">' +
         A.icon(d.playing === t.id ? 'stop' : 'play') + (d.playing === t.id ? 'עצירה' : 'נגן דוגמה') + '</button></label>').join('') +
-      '</div><p class="field-hint music-credit">המוזיקה: <bdi>Kevin MacLeod (incompetech.com)</bdi>, ברישיון <bdi>CC BY 4.0</bdi></p></fieldset>' +
+      '</div><p class="field-hint music-credit">המוזיקה: <bdi>Jason Shaw (audionautix.com)</bdi>, ברישיון <bdi>CC BY 4.0</bdi>, ו־<bdi>DL Sounds (dl-sounds.com)</bdi></p></fieldset>' +
       '<label class="setting-row switch"><span><b>דירוג אישי בסיום</b><span class="sub">כל משתתף יראה את המקום והניקוד שלו</span></span>' +
       '<input type="checkbox" id="show-rank"' + (d.showRank ? ' checked' : '') + '><span class="switch-track"></span></label>' +
       '</div>'

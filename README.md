@@ -7,7 +7,7 @@
 
 ## מוזיקה
 
-מוזיקת הרקע: Kevin MacLeod (incompetech.com), ברישיון Creative Commons: By Attribution 4.0
-https://creativecommons.org/licenses/by/4.0/
-
-הקטעים: Happy Happy Game Show, Monkeys Spinning Monkeys, Pixel Peeker Polka - faster, Sneaky Snitch, Investigations, Carefree.
+מוזיקת הרקע:
+- Jason Shaw (audionautix.com), ברישיון Creative Commons: By Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/
+  הקטעים: Threshold, Cycles, Big Car Theft, Bustin Loose, Marauder.
+- DL Sounds (dl-sounds.com), Royalty Free — הקטעים: Videogame1, Platformer2, Superboy.

@@ -4,3 +4,5 @@
 node_modules/
 .DS_Store
 Thumbs.db
+# קבצי מוזיקה מקוריים (העותקים הדחוסים נמצאים ב-assets/music)
+מנגינות/

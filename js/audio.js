@@ -363,12 +363,12 @@
   });
 
   /* =========================================================
-     מוזיקה אמיתית מקבצים (Kevin MacLeod, incompetech.com, CC BY 4.0).
+     מוזיקה אמיתית מקבצים (Audionautix CC BY 4.0, ו-DL Sounds).
      מתנגנת ישירות (לא דרך מנוע הצליל), כדי שתישמע בכל דפדפן.
      אם קובץ לא נטען (למשל סינון), חוזרים למוזיקה המסונתזת שלמעלה.
      ========================================================= */
   const synth = { play: S.playMusic, stop: S.stopMusic, pause: S.pauseMusic, resume: S.resumeMusic, playing: S.musicPlaying, setMuted: S.setMuted };
-  const FILES = { fun: 1, kids: 1, chase: 1, drama: 1, mystery: 1, cinema: 1 };
+  const FILES = { fun: 1, kids: 1, hero: 1, groove: 1, cinema: 1, chase: 1, drama: 1, mystery: 1 };
   const SYNTH_OF = (id) => (TRACKS[id] ? id : 'fun');
   const VOL = 0.5;
   let el = null, fileOn = false, filePaused = false, fileTrack = null, fadeT = null;
