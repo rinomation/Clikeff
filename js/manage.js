@@ -1,32 +1,60 @@
 /* =========================================================
    Clikeff · ניהול מנויים (רק למנהלת המערכת)
-   יצירת חשבון ללקוח עם מייל וסיסמה, מנוי לשנה, חידוש ועצירה.
+   כל הלקוחות ופרטיהם, ויצירת לקוח חדש עם מייל, סיסמה ותוקף.
    ========================================================= */
 (function (A) {
   'use strict';
   const N = A.Net, R = A.FsRest, $ = A.$, esc = A.esc;
   const GAME_URL = 'https://clikeff.vercel.app/admin';
-  const st = { user: null, list: [], q: '', last: null, mode: 'signin', shown: {} };
+  const DEMO = /[?&]demo\b/.test(location.search);
+  const st = { user: null, list: [], q: '', filter: 'all', open: null, edit: null, shown: {}, last: null, form: {}, mode: 'signin' };
 
-  const fmt = (ms) => { const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
+  const fmt = (ms) => { if (!ms) return '—'; const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
   const daysLeft = (ms) => Math.ceil((ms - Date.now()) / 864e5);
+  const tms = (t) => (t && t.toMillis ? t.toMillis() : 0);
+  const expMs = (l) => tms(l.expires);
   /** 050-1234567 → 972501234567 (לקישור וואטסאפ) */
   const waNum = (p) => { p = String(p || '').replace(/[^0-9]/g, ''); return p.startsWith('0') ? '972' + p.slice(1) : p; };
-  const expMs = (l) => (l.expires && l.expires.toMillis ? l.expires.toMillis() : 0);
+  const prettyPhone = (p) => { p = String(p || '').replace(/[^0-9]/g, ''); return p.length === 10 ? p.slice(0, 3) + '-' + p.slice(3, 6) + '-' + p.slice(6) : p; };
+  const ic = (n) => '<span class="mi">' + A.icon(n) + '</span>';
+  const COLORS = ['#2ee6ff', '#ff5a5f', '#ffb020', '#14c49a', '#3d7bff', '#a46bff'];
+  const colorOf = (s) => { let h = 0; String(s || '').split('').forEach((c) => { h = (h * 31 + c.charCodeAt(0)) >>> 0; }); return COLORS[h % COLORS.length]; };
+  const initial = (l) => (String(l.name || l.email || '?').trim()[0] || '?');
 
-  const genPass = N.genPass;
+  function statusOf(l) {
+    const days = daysLeft(expMs(l));
+    if (l.active === false) return { k: 'stop', t: 'מושהה' };
+    if (days <= 0) return { k: 'end', t: 'הסתיים' };
+    if (days <= 30) return { k: 'soon', t: 'עוד ' + days + ' ימים' };
+    return { k: 'ok', t: 'פעיל' };
+  }
 
-  /* ---------- תצוגה ---------- */
+  function message(x) {
+    return 'שלום ' + x.name + ',\n' +
+      'המנוי שלך ל-Clikeff מוכן!\n\n' +
+      'כניסה למנחים: ' + GAME_URL + '\n' +
+      'מייל: ' + x.email + '\n' +
+      'סיסמה: ' + x.pass + '\n\n' +
+      'המנוי בתוקף עד ' + fmt(x.expires) + '.\n' +
+      'לוחצים, נהנים, משחקים!';
+  }
+  const copy = (t, ok) => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+    .then(() => A.toast(ok || 'הועתק', { type: 'ok' })).catch(() => A.toast('לא הצלחנו להעתיק', { type: 'bad' }));
+
+  /* ---------- מסגרת ---------- */
   function header() {
     return '<header class="admin-top">' +
       '<a class="admin-brand" href="admin.html">' + A.logo('logo-sm') + '<h1><span class="sr-only">Clikeff</span><small>ניהול מנויים</small></h1></a>' +
       '<span class="spacer"></span><div class="actions">' +
-      (st.user ? '<a class="btn btn-ghost btn-sm" href="admin.html">למשחק</a>' +
-        '<button class="icon-btn" type="button" data-action="logout" aria-label="יציאה" title="יציאה">' + A.icon('door') + '</button>' : '') +
+      (st.user ? '<span class="m-me" dir="ltr">' + esc(st.user.email || '') + '</span>' +
+        '<a class="btn btn-ghost btn-sm" href="admin.html">' + ic('play') + 'למשחק</a>' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-action="logout">' + ic('door') + 'יציאה</button>' : '') +
       '</div></header>';
   }
   function render(body) { $('#app').innerHTML = header() + body; }
+  const wait = (t) => render('<section class="auth"><div class="auth-wait"><span class="spinner"></span>' + t + '</div></section>');
 
+  /* ---------- כניסה ---------- */
   function viewLogin(d) {
     d = d || {};
     const up = st.mode === 'signup';
@@ -42,41 +70,24 @@
       '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
       '<button class="btn btn-primary btn-lg btn-block" type="submit">' + (up ? 'יצירת החשבון' : 'כניסה') + '</button>' +
       (up ? '<button class="link-btn auth-forgot" type="button" data-action="mode" data-value="signin">כבר יש לי חשבון</button>'
-        : '<button class="link-btn auth-forgot" type="button" data-action="forgot">שכחתי סיסמה</button>' +
-          '<button class="link-btn auth-forgot" type="button" data-action="mode" data-value="signup">פעם ראשונה כאן? יצירת חשבון מנהלת</button>') +
+        : '<button class="link-btn auth-forgot" type="button" data-action="mode" data-value="signup">פעם ראשונה כאן? יצירת חשבון מנהלת</button>') +
       '</form></section>');
     $('#m-login').addEventListener('submit', (e) => { e.preventDefault(); up ? doSignUp() : doSignIn(); });
     const pw = $('#m-pass'); if (pw) pw.focus();
   }
 
-  function viewVerify(d) {
-    d = d || {};
-    render('<section class="auth"><div class="card auth-card no-lic">' +
-      '<img src="' + A.img('scroll') + '" alt="">' +
-      '<h2>עוד צעד אחד</h2>' +
-      '<p>שלחנו מייל אימות אל <bdi>' + esc(st.user.email) + '</bdi>. פתחי אותו, לחצי על הקישור שבו, ואז חזרי לכאן ולחצי "אימתתי".</p>' +
-      '<p class="m-small">לא רואה את המייל? כדאי לבדוק גם בתיקיית הספאם.</p>' +
-      '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
-      '<button class="btn btn-primary btn-lg btn-block" type="button" data-action="verified">אימתתי</button>' +
-      '<button class="link-btn" type="button" data-action="resend">שליחת המייל שוב</button>' +
-      '</div></section>');
-  }
-
-  /** שלב חד-פעמי: מספר החשבון של המנהלת נכנס לכללי האבטחה */
   function viewSetup() {
-    render('<section class="auth"><div class="card auth-card no-lic">' +
-      '<img src="' + A.img('crown') + '" alt="">' +
-      '<h2>החשבון שלך מוכן!</h2>' +
-      '<p>נשאר צעד אחד: להכניס לכללי האבטחה את מספר החשבון שלך. שלחי לי את המספר הזה:</p>' +
+    render('<section class="auth"><div class="card auth-card m-msg">' +
+      '<h2>החשבון שלך מוכן</h2>' +
+      '<p>נשאר צעד אחד: להכניס לכללי האבטחה את מספר החשבון שלך.</p>' +
       '<code class="m-uid" dir="ltr">' + esc(st.user.uid) + '</code>' +
-      '<button class="btn btn-primary btn-block" type="button" data-action="copy-uid">' + A.icon('copy') + 'העתקת המספר</button>' +
+      '<button class="btn btn-primary btn-block" type="button" data-action="copy-uid">' + ic('copy') + 'העתקת המספר</button>' +
       '<button class="link-btn" type="button" data-action="retry">פרסמתי את הכללים, לנסות שוב</button>' +
       '</div></section>');
   }
 
   function viewNotOwner() {
-    render('<section class="auth"><div class="card auth-card no-lic">' +
-      '<img src="' + A.img('door') + '" alt="">' +
+    render('<section class="auth"><div class="card auth-card m-msg">' +
       '<h2>הדף הזה רק למנהלת</h2>' +
       '<p>נכנסת עם <bdi>' + esc(st.user.email) + '</bdi>. כדי לנהל מנויים צריך להיכנס עם חשבון המנהלת.</p>' +
       '<button class="btn btn-primary btn-block" type="button" data-action="logout">כניסה עם חשבון אחר</button>' +
@@ -84,92 +95,120 @@
       '</div></section>');
   }
 
-  function statusOf(l) {
-    const ms = expMs(l), days = daysLeft(ms);
-    if (l.active === false) return ['stop', 'מושהה'];
-    if (days <= 0) return ['end', 'הסתיים'];
-    if (days <= 30) return ['soon', 'עוד ' + days + ' ימים'];
-    return ['ok', 'פעיל'];
+  /* ---------- הלוח ---------- */
+  function counts() {
+    const c = { all: st.list.length, ok: 0, soon: 0, end: 0, stop: 0 };
+    st.list.forEach((l) => { c[statusOf(l).k]++; });
+    return c;
   }
 
-  function message(x) {
-    return 'שלום ' + x.name + ',\n' +
-      'המנוי שלך ל-Clikeff מוכן!\n\n' +
-      'כניסה למנחים: ' + GAME_URL + '\n' +
-      'מייל: ' + x.email + '\n' +
-      'סיסמה: ' + x.pass + '\n\n' +
-      'המנוי בתוקף עד ' + fmt(x.expires) + '.\n' +
-      'אפשר להחליף סיסמה דרך "שכחתי סיסמה" במסך הכניסה.\n' +
-      'לוחצים, נהנים, משחקים!';
-  }
-
-  function viewDash(d) {
-    d = d || {};
-    const q = st.q.trim().toLowerCase();
-    const rows = st.list
-      .filter((l) => !q || (l.name || '').toLowerCase().indexOf(q) >= 0 || (l.email || '').indexOf(q) >= 0)
-      .sort((a, b) => expMs(a) - expMs(b));
-    const active = st.list.filter((l) => statusOf(l)[0] === 'ok' || statusOf(l)[0] === 'soon').length;
-    const soon = st.list.filter((l) => statusOf(l)[0] === 'soon').length;
-    const x = st.last;
-    render('<section class="admin-main manage">' +
-      '<div class="page-head"><div><h2>ניהול מנויים</h2><p>לקוח חדש, חידוש לשנה נוספת ועצירת מנוי.</p></div>' +
-      '<div class="m-stats"><span><b>' + active + '</b> פעילים</span>' + (soon ? '<span class="soon"><b>' + soon + '</b> מסתיימים החודש</span>' : '') + '</div></div>' +
-
-      '<div class="m-grid">' +
-      '<form class="card m-new" id="m-new" novalidate>' +
-      '<h3 class="card-title">' + A.icon('sparkle') + 'לקוח חדש</h3>' +
-      '<label class="field"><span class="field-label">שם הלקוח או המוסד</span><input class="input" id="n-name" maxlength="60" placeholder="למשל: תלמוד תורה נועם התורה" value="' + esc(d.name || '') + '"></label>' +
-      '<label class="field"><span class="field-label">המייל שאיתו הלקוח יתחבר</span><input class="input" id="n-email" type="email" dir="ltr" placeholder="name@example.com" value="' + esc(d.email || '') + '"></label>' +
-      '<label class="field"><span class="field-label">מספר לוואטסאפ <small>(לא חובה)</small></span><input class="input" id="n-phone" type="tel" dir="ltr" placeholder="05X-XXX-XXXX" value="' + esc(d.phone || '') + '"></label>' +
-      '<label class="field"><span class="field-label">תקופה</span><select class="input" id="n-months">' +
-      [[12, 'שנה'], [24, 'שנתיים'], [6, 'חצי שנה'], [3, 'שלושה חודשים'], [1, 'חודש']].map((m) => '<option value="' + m[0] + '"' + ((d.months || 12) === m[0] ? ' selected' : '') + '>' + m[1] + '</option>').join('') +
-      '</select></label>' +
-      '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
-      '<button class="btn btn-accent btn-lg btn-block" type="submit"' + (d.busy ? ' disabled' : '') + '>' + (d.busy ? 'יוצרים…' : 'יצירת מנוי') + '</button>' +
-      '</form>' +
-
-      (x ? '<div class="card m-result">' +
-        '<h3 class="card-title">' + A.icon('check') + 'המנוי של ' + esc(x.name) + ' מוכן!</h3>' +
-        '<p class="m-small">שלחי ללקוח את הפרטים. את הסיסמה לא נראה שוב אחר כך, אבל תמיד אפשר לשלוח לו מייל לאיפוס סיסמה.</p>' +
+  function newPanel() {
+    const x = st.last, f = st.form;
+    if (x) {
+      return '<aside class="m-side m-done">' +
+        '<div class="m-side-head"><span class="m-dot ok"></span><h3>המנוי של ' + esc(x.name) + ' מוכן</h3></div>' +
+        '<p class="m-hint">שלחי ללקוח את הפרטים. הסיסמה שמורה גם ברשימת הלקוחות.</p>' +
         '<dl class="m-creds">' +
         '<dt>קישור</dt><dd dir="ltr">' + esc(GAME_URL) + '</dd>' +
         '<dt>מייל</dt><dd dir="ltr">' + esc(x.email) + '</dd>' +
         '<dt>סיסמה</dt><dd dir="ltr" class="pw">' + esc(x.pass) + '</dd>' +
         '<dt>בתוקף עד</dt><dd>' + fmt(x.expires) + '</dd></dl>' +
-        '<div class="m-share">' +
-        '<button class="btn btn-primary" type="button" data-action="copy">' + A.icon('copy') + 'העתקת ההודעה</button>' +
-        '<a class="btn btn-ghost" href="https://wa.me/' + waNum(x.phone) + '?text=' + encodeURIComponent(message(x)) + '" target="_blank" rel="noopener">שליחה בוואטסאפ</a>' +
-        '<a class="btn btn-ghost" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent('המנוי שלך ל-Clikeff') + '&body=' + encodeURIComponent(message(x)) + '">שליחה במייל</a>' +
-        '</div></div>'
-        : '<div class="card m-help"><h3 class="card-title">' + A.icon('alert') + 'איך זה עובד</h3>' +
-          '<ol><li>כותבים שם ומייל של הלקוח ולוחצים "יצירת מנוי".</li><li>המערכת יוצרת לו סיסמה ומנוי מהיום.</li>' +
-          '<li>שולחים לו את ההודעה המוכנה בוואטסאפ או במייל.</li><li>בסוף התקופה הכניסה שלו נחסמת לבד, עד שתחדשי.</li></ol></div>') +
-      '</div>' +
+        '<div class="m-col">' +
+        '<a class="btn btn-accent btn-block" href="https://wa.me/' + waNum(x.phone) + '?text=' + encodeURIComponent(message(x)) + '" target="_blank" rel="noopener">' + ic('send') + 'שליחה בוואטסאפ</a>' +
+        '<div class="m-two">' +
+        '<button class="btn btn-ghost" type="button" data-action="copy-msg">' + ic('copy') + 'העתקה</button>' +
+        '<a class="btn btn-ghost" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent('המנוי שלך ל-Clikeff') + '&body=' + encodeURIComponent(message(x)) + '">' + ic('mail') + 'במייל</a>' +
+        '</div>' +
+        '<button class="link-btn" type="button" data-action="new-again">יצירת לקוח נוסף</button>' +
+        '</div></aside>';
+    }
+    return '<aside class="m-side">' +
+      '<form id="m-new" novalidate>' +
+      '<div class="m-side-head"><span class="m-dot"></span><h3>לקוח חדש</h3></div>' +
+      '<label class="field"><span class="field-label">שם הלקוח או המוסד</span><input class="input" id="n-name" maxlength="60" placeholder="למשל: תורת בנימין" value="' + esc(f.name || '') + '"></label>' +
+      '<label class="field"><span class="field-label">מייל להתחברות</span><input class="input" id="n-email" type="email" dir="ltr" placeholder="name@example.com" value="' + esc(f.email || '') + '"></label>' +
+      '<label class="field"><span class="field-label">מספר לוואטסאפ <small>(לא חובה)</small></span><input class="input" id="n-phone" type="tel" dir="ltr" placeholder="05X-XXX-XXXX" value="' + esc(f.phone || '') + '"></label>' +
+      '<div class="field"><span class="field-label">תקופה</span><div class="m-months" role="radiogroup">' +
+      [[1, 'חודש'], [6, 'חצי שנה'], [12, 'שנה'], [24, 'שנתיים']].map((m) =>
+        '<button type="button" class="chip" data-action="months" data-value="' + m[0] + '" aria-pressed="' + ((f.months || 12) === m[0]) + '">' + m[1] + '</button>').join('') +
+      '</div></div>' +
+      '<p class="form-error" role="alert">' + (f.error ? A.icon('alert') + esc(f.error) : '') + '</p>' +
+      '<button class="btn btn-accent btn-lg btn-block" type="submit"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'יוצרים…' : 'יצירת מנוי') + '</button>' +
+      '<p class="m-hint">המערכת יוצרת סיסמה, והמנוי מתחיל מהיום.</p>' +
+      '</form></aside>';
+  }
 
-      '<div class="card m-list">' +
-      '<div class="m-list-head"><h3 class="card-title">' + A.icon('users') + 'הלקוחות <small>(' + st.list.length + ')</small></h3>' +
-      '<input class="input m-search" id="m-search" type="search" placeholder="חיפוש לפי שם או מייל" value="' + esc(st.q) + '"></div>' +
-      (rows.length ? '<div class="m-rows">' + rows.map((l) => {
-        const s = statusOf(l);
-        return '<div class="m-row">' +
-          '<div class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><span dir="ltr">' + esc(l.email || '') + (l.phone ? ' · <a href="https://wa.me/' + waNum(l.phone) + '" target="_blank" rel="noopener">' + esc(l.phone) + '</a>' : '') + '</span></div>' +
-          '<div class="m-exp"><span class="m-badge ' + s[0] + '">' + s[1] + '</span><small>עד ' + fmt(expMs(l)) + '</small></div>' +
-          '<div class="m-pass">' + (l.pass
-            ? (st.shown[l.id] ? '<code dir="ltr">' + esc(l.pass) + '</code>' : '<code>••••••••</code>') +
-              '<button class="link-btn" type="button" data-action="show-pass" data-value="' + esc(l.id) + '">' + (st.shown[l.id] ? 'הסתרה' : 'הצגת סיסמה') + '</button>'
-            : '<small>אין סיסמה שמורה</small>') + '</div>' +
-          '<div class="m-acts">' +
-          '<button class="btn btn-sm btn-primary" type="button" data-action="renew" data-value="' + esc(l.id) + '">חידוש לשנה</button>' +
-          '<button class="btn btn-sm btn-ghost" type="button" data-action="toggle" data-value="' + esc(l.id) + '">' + (l.active === false ? 'הפעלה' : 'עצירה') + '</button>' +
-          (l.pass ? '<button class="btn btn-sm btn-ghost" type="button" data-action="resend" data-value="' + esc(l.id) + '">שליחת הפרטים</button>' : '') +
-          '<button class="btn btn-sm btn-ghost" type="button" data-action="reset" data-value="' + esc(l.id) + '">מייל לסיסמה חדשה</button>' +
-          '</div></div>';
-      }).join('') + '</div>'
-        : '<p class="m-empty">' + (st.list.length ? 'לא נמצאו לקוחות בחיפוש הזה.' : 'עוד אין לקוחות. הלקוח הראשון בדרך!') + '</p>') +
+  function row(l) {
+    const s = statusOf(l), open = st.open === l.id, editing = st.edit === l.id;
+    return '<li class="m-row' + (open ? ' is-open' : '') + '">' +
+      '<button class="m-row-head" type="button" data-action="open" data-value="' + esc(l.id) + '" aria-expanded="' + open + '">' +
+      '<span class="m-av" style="--c:' + colorOf(l.name || l.email) + '">' + esc(initial(l)) + '</span>' +
+      '<span class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><small dir="ltr">' + esc(l.email || '') + '</small></span>' +
+      '<span class="m-when"><span class="m-badge ' + s.k + '">' + s.t + '</span><small>עד ' + fmt(expMs(l)) + '</small></span>' +
+      '<span class="m-chev">' + A.icon('next') + '</span>' +
+      '</button>' +
+      (open ? '<div class="m-detail">' +
+        (editing
+          ? '<div class="m-edit">' +
+            '<label class="field"><span class="field-label">שם</span><input class="input" id="e-name" maxlength="60" value="' + esc(l.name || '') + '"></label>' +
+            '<label class="field"><span class="field-label">מספר לוואטסאפ</span><input class="input" id="e-phone" type="tel" dir="ltr" value="' + esc(l.phone || '') + '"></label>' +
+            '<div class="m-acts"><button class="btn btn-primary btn-sm" type="button" data-action="save-edit" data-value="' + esc(l.id) + '">שמירה</button>' +
+            '<button class="btn btn-ghost btn-sm" type="button" data-action="cancel-edit">ביטול</button></div></div>'
+          : '<dl class="m-info">' +
+            '<div><dt>מייל</dt><dd dir="ltr">' + esc(l.email || '—') + '</dd></div>' +
+            '<div><dt>מספר</dt><dd dir="ltr">' + (l.phone ? '<a href="https://wa.me/' + waNum(l.phone) + '" target="_blank" rel="noopener">' + esc(prettyPhone(l.phone)) + '</a>' : '—') + '</dd></div>' +
+            '<div><dt>סיסמה</dt><dd>' + (l.pass
+              ? '<code dir="ltr">' + (st.shown[l.id] ? esc(l.pass) : '••••••••') + '</code>' +
+                '<button class="link-btn" type="button" data-action="show-pass" data-value="' + esc(l.id) + '">' + (st.shown[l.id] ? 'הסתרה' : 'הצגה') + '</button>' +
+                (st.shown[l.id] ? '<button class="link-btn" type="button" data-action="copy-pass" data-value="' + esc(l.id) + '">העתקה</button>' : '')
+              : '<span class="m-muted">לא שמורה</span>') + '</dd></div>' +
+            '<div><dt>נפתח ב-</dt><dd>' + fmt(tms(l.createdAt)) + '</dd></div>' +
+            '<div><dt>בתוקף עד</dt><dd>' + fmt(expMs(l)) + '</dd></div>' +
+            '<div><dt>מצב</dt><dd><span class="m-badge ' + s.k + '">' + s.t + '</span></dd></div>' +
+            '</dl>' +
+            '<div class="m-acts">' +
+            '<button class="btn btn-primary btn-sm" type="button" data-action="renew" data-value="' + esc(l.id) + '">' + ic('reset') + 'חידוש לשנה</button>' +
+            (l.pass ? '<button class="btn btn-ghost btn-sm" type="button" data-action="resend" data-value="' + esc(l.id) + '">' + ic('send') + 'שליחת הפרטים</button>' : '') +
+            '<button class="btn btn-ghost btn-sm" type="button" data-action="edit" data-value="' + esc(l.id) + '">' + ic('edit') + 'עריכה</button>' +
+            '<button class="btn btn-ghost btn-sm" type="button" data-action="reset" data-value="' + esc(l.id) + '">' + ic('mail') + 'מייל לסיסמה חדשה</button>' +
+            '<button class="btn btn-ghost btn-sm m-danger" type="button" data-action="toggle" data-value="' + esc(l.id) + '">' + (l.active === false ? 'הפעלה מחדש' : 'עצירת המנוי') + '</button>' +
+            '</div>') +
+        '</div>' : '') +
+      '</li>';
+  }
+
+  function viewDash() {
+    const c = counts(), q = st.q.trim().toLowerCase();
+    const digits = q.replace(/\D/g, '');
+    const rows = st.list
+      .filter((l) => st.filter === 'all' || statusOf(l).k === st.filter)
+      .filter((l) => !q || (l.name || '').toLowerCase().indexOf(q) >= 0 || (l.email || '').indexOf(q) >= 0 || (digits && (l.phone || '').indexOf(digits) >= 0))
+      .sort((a, b) => (statusOf(a).k === 'ok' ? 1 : 0) - (statusOf(b).k === 'ok' ? 1 : 0) || expMs(a) - expMs(b));
+    const FILTERS = [['all', 'הכול', c.all], ['ok', 'פעילים', c.ok], ['soon', 'מסתיימים בקרוב', c.soon], ['end', 'הסתיימו', c.end], ['stop', 'מושהים', c.stop]];
+    render('<section class="admin-main manage">' +
+      '<div class="m-top"><div><h2>ניהול מנויים</h2><p>כל הלקוחות במקום אחד</p></div>' +
+      '<div class="m-stats">' +
+      '<div><b>' + c.all + '</b><span>לקוחות</span></div>' +
+      '<div class="ok"><b>' + (c.ok + c.soon) + '</b><span>פעילים</span></div>' +
+      '<div class="soon"><b>' + c.soon + '</b><span>מסתיימים החודש</span></div>' +
+      '</div></div>' +
+      '<div class="m-layout">' +
+      '<div class="m-main">' +
+      '<div class="m-tools">' +
+      '<div class="m-search-wrap">' + ic('search') + '<input class="input m-search" id="m-search" type="search" placeholder="חיפוש לפי שם, מייל או מספר" value="' + esc(st.q) + '"></div>' +
+      '<div class="m-filters">' + FILTERS.map((f) => (f[0] === 'all' || f[2] ? '<button type="button" class="chip" data-action="filter" data-value="' + f[0] + '" aria-pressed="' + (st.filter === f[0]) + '">' + f[1] + ' <b>' + f[2] + '</b></button>' : '')).join('') + '</div>' +
+      '</div>' +
+      (rows.length ? '<ul class="m-rows">' + rows.map(row).join('') + '</ul>'
+        : '<div class="m-empty"><b>' + (st.list.length ? 'לא נמצאו לקוחות' : 'עוד אין לקוחות') + '</b><span>' + (st.list.length ? 'נסי חיפוש אחר או סינון אחר.' : 'הלקוח הראשון שתיצרי יופיע כאן.') + '</span></div>') +
+      '</div>' +
+      newPanel() +
       '</div></section>');
 
-    $('#m-new').addEventListener('submit', (e) => { e.preventDefault(); doCreate(); });
+    const form = $('#m-new');
+    if (form) {
+      form.addEventListener('submit', (e) => { e.preventDefault(); doCreate(); });
+      ['name', 'email', 'phone'].forEach((k) => { const el = $('#n-' + k); if (el) el.addEventListener('input', () => { st.form[k] = el.value; }); });
+    }
     const s = $('#m-search');
     s.addEventListener('input', () => { st.q = s.value; const pos = s.selectionStart; viewDash(); const s2 = $('#m-search'); s2.focus(); s2.setSelectionRange(pos, pos); });
   }
@@ -181,13 +220,14 @@
     if (!st.user) return viewLogin();
     if (String(st.user.email || '').toLowerCase() !== N.OWNER) return viewNotOwner();
     N.useUser(st.user);
-    render('<section class="auth"><div class="auth-wait"><span class="spinner"></span>טוענים את הלקוחות…</div></section>');
+    wait('טוענים את הלקוחות…');
     const ok = await loadList();
     if (ok === 'denied') return viewSetup();
     viewDash();
   }
 
   async function loadList() {
+    if (DEMO) return true;
     try { st.list = await R.list('licenses'); return true; }
     catch (e) {
       st.list = [];
@@ -209,24 +249,22 @@
     if (email.toLowerCase() !== N.OWNER) return viewLogin({ email, error: 'חשבון מנהלת אפשר לפתוח רק עם ' + N.OWNER });
     if (pass.length < 8) return viewLogin({ email, error: 'הסיסמה צריכה להיות לפחות 8 תווים' });
     if (pass !== pass2) return viewLogin({ email, error: 'שתי הסיסמאות לא זהות' });
-    try {
-      await N.signUp(email, pass);
-      st.mode = 'signin';
-      await route();
-    } catch (e) {
-      if (/email-already-in-use/.test(e.code || '')) { st.mode = 'signin'; return viewLogin({ email, error: 'כבר יש חשבון למייל הזה. אפשר להיכנס, או ללחוץ "שכחתי סיסמה".' }); }
+    try { await N.signUp(email, pass); st.mode = 'signin'; await route(); }
+    catch (e) {
+      if (/email-already-in-use/.test(e.code || '')) { st.mode = 'signin'; return viewLogin({ email, error: 'כבר יש חשבון למייל הזה. אפשר להיכנס.' }); }
       viewLogin({ email, error: N.authError(e) });
     }
   }
 
   async function doCreate() {
-    const name = $('#n-name').value.trim(), email = $('#n-email').value.trim().toLowerCase(), months = Number($('#n-months').value) || 12;
-    const phone = $('#n-phone').value.replace(/[^0-9+]/g, '');
-    const keep = { name, email, months, phone };
-    if (!name) return viewDash(Object.assign(keep, { error: 'נא לכתוב את שם הלקוח' }));
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return viewDash(Object.assign(keep, { error: 'כתובת המייל לא נראית תקינה' }));
-    viewDash(Object.assign({ busy: true }, keep));
-    const pass = genPass();
+    const f = st.form;
+    const name = ($('#n-name').value || '').trim(), email = ($('#n-email').value || '').trim().toLowerCase();
+    const phone = ($('#n-phone').value || '').replace(/[^0-9+]/g, ''), months = f.months || 12;
+    Object.assign(f, { name, email, phone, error: null });
+    if (!name) { f.error = 'נא לכתוב את שם הלקוח'; return viewDash(); }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { f.error = 'כתובת המייל לא נראית תקינה'; return viewDash(); }
+    f.busy = true; viewDash();
+    const pass = N.genPass();
     let newUid = null;
     try {
       const sec = firebase.apps.find((a) => a.name === 'creator') || firebase.initializeApp(window.FIREBASE_CONFIG, 'creator');
@@ -235,10 +273,9 @@
       newUid = c.user.uid;
       await sec.auth().signOut();
     } catch (e) {
-      const msg = /email-already-in-use/.test(e.code || '')
-        ? 'המייל הזה כבר רשום. אם זה לקוח קיים, חדשי לו את המנוי מהרשימה למטה.'
-        : N.authError(e);
-      return viewDash(Object.assign(keep, { error: msg }));
+      f.busy = false;
+      f.error = /email-already-in-use/.test(e.code || '') ? 'המייל הזה כבר רשום. אם זה לקוח קיים, אפשר לחדש לו את המנוי מהרשימה.' : N.authError(e);
+      return viewDash();
     }
     const exp = new Date(); exp.setMonth(exp.getMonth() + months);
     const doc = { name, email, phone, pass, passAt: R.NOW, active: true, expires: exp, months, createdAt: R.NOW, updatedAt: R.NOW };
@@ -246,36 +283,46 @@
     for (let t = 0; t < 3 && !ok; t++) {
       try { await R.set('licenses/' + newUid, doc); ok = true; } catch (e) { await new Promise((r) => setTimeout(r, 800)); }
     }
-    if (!ok) return viewDash(Object.assign(keep, { error: 'החשבון נוצר אבל המנוי לא נשמר. שמרי את הסיסמה ' + pass + ' ונסי שוב בעוד רגע.' }));
+    f.busy = false;
+    if (!ok) { f.error = 'החשבון נוצר אבל המנוי לא נשמר. שמרי את הסיסמה ' + pass + ' ונסי שוב בעוד רגע.'; return viewDash(); }
     st.last = { name, email, pass, phone, expires: exp.getTime() };
+    st.form = {};
     await loadList();
+    st.open = newUid;
     viewDash();
     A.toast('המנוי נוצר!', { type: 'ok' });
   }
 
+  async function patch(id, data, okMsg) {
+    try {
+      if (!DEMO) await R.set('licenses/' + id, Object.assign({ updatedAt: R.NOW }, data), { merge: true });
+      else Object.assign(st.list.find((x) => x.id === id), data);
+      await loadList(); viewDash();
+      if (okMsg) A.toast(okMsg, { type: 'ok' });
+    } catch (e) { A.toast(N.errorText(e), { type: 'bad' }); }
+  }
+
+  const find = (id) => st.list.find((x) => x.id === id);
   async function renew(id) {
-    const l = st.list.find((x) => x.id === id); if (!l) return;
+    const l = find(id); if (!l) return;
     const d = new Date(Math.max(Date.now(), expMs(l))); d.setFullYear(d.getFullYear() + 1);
-    try {
-      await R.set('licenses/' + id, { expires: d, active: true, updatedAt: R.NOW }, { merge: true });
-      await loadList(); viewDash();
-      A.toast('המנוי של ' + (l.name || l.email) + ' חודש עד ' + fmt(d.getTime()), { type: 'ok' });
-    } catch (e) { A.toast(N.errorText(e), { type: 'bad' }); }
+    return patch(id, { expires: DEMO ? { toMillis: () => d.getTime() } : d, active: true }, 'המנוי של ' + (l.name || l.email) + ' חודש עד ' + fmt(d.getTime()));
   }
-
   async function toggle(id) {
-    const l = st.list.find((x) => x.id === id); if (!l) return;
+    const l = find(id); if (!l) return;
     const on = l.active === false;
-    try {
-      await R.set('licenses/' + id, { active: on, updatedAt: R.NOW }, { merge: true });
-      await loadList(); viewDash();
-      A.toast(on ? 'המנוי הופעל מחדש' : 'המנוי נעצר. הלקוח לא יוכל לפתוח משחק חדש.', { type: 'ok' });
-    } catch (e) { A.toast(N.errorText(e), { type: 'bad' }); }
+    if (!on && !confirm('לעצור את המנוי של ' + (l.name || l.email) + '? הוא לא יוכל לפתוח משחקים עד שתפעילי מחדש.')) return;
+    return patch(id, { active: on }, on ? 'המנוי הופעל מחדש' : 'המנוי נעצר');
   }
-
+  async function saveEdit(id) {
+    const name = ($('#e-name').value || '').trim(), phone = ($('#e-phone').value || '').replace(/[^0-9+]/g, '');
+    if (!name) return A.toast('נא לכתוב שם', { type: 'bad' });
+    st.edit = null;
+    return patch(id, { name, phone }, 'הפרטים נשמרו');
+  }
   async function resetPw(id) {
-    const l = st.list.find((x) => x.id === id); if (!l || !l.email) return;
-    try { await N.resetPassword(l.email); A.toast('נשלח מייל לבחירת סיסמה חדשה אל ' + l.email, { type: 'ok', ms: 6000 }); }
+    const l = find(id); if (!l || !l.email) return;
+    try { if (!DEMO) await N.resetPassword(l.email); A.toast('נשלח מייל לבחירת סיסמה חדשה אל ' + l.email, { type: 'ok', ms: 6000 }); }
     catch (e) { A.toast(N.authError(e), { type: 'bad' }); }
   }
 
@@ -283,50 +330,48 @@
     const b = e.target.closest('[data-action]');
     if (!b || b.disabled) return;
     const act = b.dataset.action, v = b.dataset.value;
-    if (act === 'mode') { st.mode = v; return viewLogin({ email: ($('#m-email') || {}).value }); }
-    if (act === 'forgot') {
-      const email = ($('#m-email').value || '').trim();
-      if (!email) return viewLogin({ error: 'כתבי את המייל ואז לחצי שוב' });
-      try { await N.resetPassword(email); A.toast('שלחנו מייל לבחירת סיסמה חדשה', { type: 'ok', ms: 6000 }); }
-      catch (err) { viewLogin({ email, error: N.authError(err) }); }
-      return;
+    switch (act) {
+      case 'mode': st.mode = v; return viewLogin({ email: ($('#m-email') || {}).value });
+      case 'logout': if (DEMO) return; await N.signOut().catch(() => {}); st.last = null; return route();
+      case 'copy-uid': return copy(st.user.uid, 'המספר הועתק');
+      case 'retry': try { await st.user.getIdToken(true); } catch (err) { /* */ } return route();
+      case 'months': st.form.months = Number(v); return viewDash();
+      case 'filter': st.filter = v; return viewDash();
+      case 'open': st.open = st.open === v ? null : v; st.edit = null; return viewDash();
+      case 'show-pass': st.shown[v] = !st.shown[v]; return viewDash();
+      case 'copy-pass': { const l = find(v); return l && copy(l.pass, 'הסיסמה הועתקה'); }
+      case 'copy-msg': return st.last && copy(message(st.last), 'ההודעה הועתקה. אפשר להדביק בוואטסאפ או במייל.');
+      case 'new-again': { st.last = null; st.form = {}; viewDash(); const n = $('#n-name'); if (n) n.focus(); return; }
+      case 'resend': {
+        const l = find(v); if (!l) return;
+        st.last = { name: l.name || '', email: l.email, pass: l.pass, phone: l.phone, expires: expMs(l) };
+        viewDash(); const side = $('.m-side'); if (side) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      case 'edit': { st.edit = v; viewDash(); const n = $('#e-name'); if (n) n.focus(); return; }
+      case 'cancel-edit': st.edit = null; return viewDash();
+      case 'save-edit': return saveEdit(v);
+      case 'renew': return renew(v);
+      case 'toggle': return toggle(v);
+      case 'reset': return resetPw(v);
     }
-    if (act === 'logout') { await N.signOut().catch(() => {}); st.last = null; return route(); }
-    if (act === 'resend') {
-      try { await N.sendVerify(); A.toast('המייל נשלח שוב', { type: 'ok' }); } catch (err) { viewVerify({ error: N.authError(err) }); }
-      return;
-    }
-    if (act === 'verified') {
-      try { await st.user.reload(); await st.user.getIdToken(true); } catch (err) { /* ננסה בכל זאת */ }
-      if (!N.user().emailVerified) return viewVerify({ error: 'עוד לא רואים את האימות. לחצי על הקישור במייל ונסי שוב.' });
-      return route();
-    }
-    if (act === 'copy' && st.last) {
-      const t = message(st.last);
-      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
-        .then(() => A.toast('ההודעה הועתקה. אפשר להדביק בוואטסאפ או במייל.', { type: 'ok' }))
-        .catch(() => A.toast('לא הצלחנו להעתיק. סמני את הפרטים והעתיקי ידנית.', { type: 'bad' }));
-      return;
-    }
-    if (act === 'copy-uid') {
-      (navigator.clipboard ? navigator.clipboard.writeText(st.user.uid) : Promise.reject())
-        .then(() => A.toast('המספר הועתק', { type: 'ok' })).catch(() => A.toast(st.user.uid));
-      return;
-    }
-    if (act === 'retry') { try { await st.user.getIdToken(true); } catch (err) { /* */ } return route(); }
-    if (act === 'show-pass') { st.shown[v] = !st.shown[v]; return viewDash(); }
-    if (act === 'resend') {
-      const l = st.list.find((x) => x.id === v); if (!l) return;
-      st.last = { name: l.name || '', email: l.email, pass: l.pass, phone: l.phone, expires: expMs(l) };
-      viewDash(); window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    if (act === 'renew') return renew(v);
-    if (act === 'toggle') return toggle(v);
-    if (act === 'reset') return resetPw(v);
   });
 
   A.mountDeco();
-  render('<section class="auth"><div class="auth-wait"><span class="spinner"></span>מתחברים…</div></section>');
+  if (DEMO) {
+    /* מצב הדגמה לצילומי מסך: לקוחות דמיוניים, בלי חיבור לשרת */
+    const T = (d) => ({ toMillis: () => Date.now() + d * 864e5 });
+    st.user = { email: N.OWNER, uid: 'demo' };
+    st.list = [
+      { id: 'a', name: 'תורת בנימין', email: 'yedidhashem@gmail.com', phone: '0504293936', pass: 'Kfmr-4827', active: true, expires: T(364), createdAt: T(-1) },
+      { id: 'b', name: 'בית יעקב רמות', email: 'office@by-ramot.co.il', phone: '0527712345', pass: 'Hwnt-5392', active: true, expires: T(21), createdAt: T(-344) },
+      { id: 'c', name: 'תלמוד תורה נועם', email: 'noam.tt@gmail.com', pass: 'Pqzd-2266', active: true, expires: T(-6), createdAt: T(-371) },
+      { id: 'd', name: 'קייטנת שמחה', email: 'simcha.camp@gmail.com', phone: '0548800112', pass: 'Rtbe-7734', active: false, expires: T(120), createdAt: T(-60) },
+      { id: 'e', name: 'ישיבת אור התורה', email: 'or.hatorah@gmail.com', phone: '0533344556', pass: 'Mxkc-3958', active: true, expires: T(230), createdAt: T(-135) }
+    ];
+    viewDash();
+    return;
+  }
+  wait('מתחברים…');
   N.initAuth().then(route).catch((e) => render('<section class="auth"><p class="form-error">' + esc(N.errorText(e)) + '</p></section>'));
 })(window.App);
