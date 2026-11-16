@@ -558,6 +558,23 @@
     if (!u || u.isAnonymous) return S.showLogin();
     return afterLogin(u);
   }
+  /* החלפת סיסמה: המערכת יוצרת סיסמה, והיא נשמרת אצל המנהלת */
+  H['change-pass'] = () => { S.view = 'changepw'; S.newPass = A.Net.genPass(); M.render('changePw', { pass: S.newPass }); };
+  H['regen-pass'] = () => { S.newPass = A.Net.genPass(); M.render('changePw', { pass: S.newPass }); };
+  H['cancel-change'] = () => S.showHome();
+  H.changeSave = async () => {
+    const cur = (A.$('#cur-pass') || {}).value || '';
+    if (!cur) return M.render('changePw', { pass: S.newPass, error: 'כתבו את הסיסמה הנוכחית' });
+    M.render('changePw', { pass: S.newPass, busy: true });
+    try {
+      await A.Net.changePassword(cur, S.newPass);
+      A.toast('הסיסמה הוחלפה. הסיסמה החדשה: ' + S.newPass, { type: 'ok', ms: 9000 });
+      S.showHome();
+    } catch (e) {
+      M.render('changePw', { pass: S.newPass, error: /wrong-password|invalid-credential|INVALID_LOGIN/.test(e.code || e.message || '') ? 'הסיסמה הנוכחית לא נכונה' : A.Net.authError(e) });
+    }
+  };
+
   H.resetSave = async () => {
     if (!S.reset) return S.showLogin();
     const { code, email, pass } = S.reset;

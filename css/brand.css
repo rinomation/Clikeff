@@ -447,3 +447,5 @@ body:has(.stage-clock.is-urgent)::after { content: ""; position: fixed; inset: 0
 .auth-card .form-error { justify-content: center; text-align: center; }
 .auth-sub { text-align: center; color: var(--text-soft); margin: -8px 0 10px; }
 .new-pass { display: block; margin: 6px 0 10px; padding: 16px; border-radius: 14px; background: rgba(0, 0, 0, .3); color: var(--cyan); font: 700 1.8rem "Fredoka", monospace; text-align: center; letter-spacing: .06em; user-select: all; }
+.m-two-btn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lic-line .link-btn { font-size: .95rem; }

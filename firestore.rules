@@ -36,6 +36,19 @@ service cloud.firestore {
         && request.resource.data.pass is string && request.resource.data.pass.size() <= 40);
     }
 
+    // פניות מטופס יצירת הקשר באתר: כל אחד יכול לשלוח, רק המנהלת קוראת
+    match /leads/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'tel', 'topic', 'msg', 'at', 'done'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.email is string && request.resource.data.email.size() <= 120
+        && request.resource.data.tel is string && request.resource.data.tel.size() <= 30
+        && request.resource.data.topic is string && request.resource.data.topic.size() <= 60
+        && request.resource.data.msg is string && request.resource.data.msg.size() <= 2000
+        && request.resource.data.at is timestamp
+        && request.resource.data.done == false;
+      allow read, update, delete: if isOwner();
+    }
+
     // הגדרות ומאגר שאלות של מנהל
     match /hosts/{hostId} {
       allow read, write: if signedIn() && me() == hostId;

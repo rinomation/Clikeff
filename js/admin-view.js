@@ -61,7 +61,8 @@
     if (!d.license || !d.license.expires) return '';
     const ms = d.license.expires.toMillis(), days = Math.ceil((ms - Date.now()) / 864e5);
     return '<p class="lic-line' + (days <= 30 ? ' is-soon' : '') + '">' + A.icon(days <= 30 ? 'alert' : 'check') +
-      (days <= 30 ? 'המנוי מסתיים בעוד <b>' + days + '</b> ימים (' + V.fmtDate(ms) + ')' : 'המנוי בתוקף עד <b>' + V.fmtDate(ms) + '</b>') + '</p>';
+      (days <= 30 ? 'המנוי מסתיים בעוד <b>' + days + '</b> ימים (' + V.fmtDate(ms) + ')' : 'המנוי בתוקף עד <b>' + V.fmtDate(ms) + '</b>') +
+      ' · <button class="link-btn" type="button" data-action="change-pass">החלפת סיסמה</button></p>';
   };
 
   /* ---------- כניסת מנחים ---------- */
@@ -95,6 +96,24 @@
     '<p class="auth-sub" style="margin:10px 0 0">כדאי לשמור אותה. אם תשכחו, אפשר לבקש אותה מהמנהלת.</p>' +
     '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
     '<button class="btn btn-primary btn-lg btn-block" type="submit"' + (d.busy ? ' disabled' : '') + '>' + (d.busy ? 'שומרים…' : 'שמירה וכניסה') + '</button>' +
+    '</form></section>';
+
+  /* ---------- החלפת סיסמה (מנחה מחובר) ---------- */
+  V.changePw = (d) =>
+    '<section class="auth">' +
+    '<form class="card auth-card" id="change-form" novalidate>' +
+    '<h2>החלפת סיסמה</h2>' +
+    '<label class="field"><span class="field-label">הסיסמה הנוכחית</span>' +
+    '<input class="input" id="cur-pass" type="password" dir="ltr" autocomplete="current-password"></label>' +
+    '<span class="field-label">הסיסמה החדשה שלכם</span>' +
+    '<code class="new-pass" dir="ltr">' + esc(d.pass || '') + '</code>' +
+    '<div class="m-two-btn">' +
+    '<button class="btn btn-ghost" type="button" data-action="copy-pass">' + A.icon('copy') + 'העתקה</button>' +
+    '<button class="btn btn-ghost" type="button" data-action="regen-pass">' + A.icon('reset') + 'סיסמה אחרת</button>' +
+    '</div>' +
+    '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
+    '<button class="btn btn-primary btn-lg btn-block" type="submit"' + (d.busy ? ' disabled' : '') + '>' + (d.busy ? 'שומרים…' : 'שמירת הסיסמה החדשה') + '</button>' +
+    '<button class="link-btn auth-forgot" type="button" data-action="cancel-change">ביטול</button>' +
     '</form></section>';
 
   /* ---------- המנוי לא פעיל ---------- */

@@ -108,3 +108,29 @@
   .m-edit { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) { .admin-top .actions .btn { padding-inline: .8em; } .admin-top .actions { gap: 6px; } }
+
+/* ---------- לשוניות ופניות ---------- */
+.m-stats .new b { color: var(--coral); }
+.m-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.m-tabs button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255, 255, 255, .04); color: var(--text-soft); font: 700 1rem 'Rubik', sans-serif; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.m-tabs button:hover { color: var(--text); }
+.m-tabs button[aria-selected="true"] { background: rgba(46, 230, 255, .12); border-color: rgba(46, 230, 255, .45); color: var(--text); }
+.m-tabs b { font: 700 .95rem 'Fredoka', sans-serif; padding: 1px 9px; border-radius: 999px; background: rgba(255, 255, 255, .08); }
+.m-tabs b.hot { background: var(--coral); color: #fff; animation: hot 1.6s ease-in-out infinite; }
+@keyframes hot { 50% { box-shadow: 0 0 0 6px rgba(255, 90, 95, .18); } }
+.m-lead { list-style: none; padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, .035); border: 1px solid var(--border); display: grid; gap: 10px; }
+.m-lead.is-done { opacity: .7; }
+.m-lead-head { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 14px; }
+.m-lead-head .m-who small { text-align: start; direction: rtl; }
+.m-lead-body { display: grid; gap: 8px; padding-inline-start: 58px; }
+.m-topic { justify-self: start; padding: 3px 12px; border-radius: 999px; background: rgba(46, 230, 255, .12); color: var(--cyan); font-weight: 700; font-size: .85rem; }
+.m-msg-text { margin: 0; padding: 10px 14px; border-radius: 12px; background: rgba(0, 0, 0, .22); color: var(--text-soft); white-space: pre-wrap; line-height: 1.6; }
+.m-contact { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.m-contact a { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); font-weight: 700; text-decoration: none; }
+.m-contact a:hover { text-decoration: underline; }
+.m-lead .m-acts { padding-inline-start: 58px; }
+@media (max-width: 640px) {
+  .m-lead-body, .m-lead .m-acts { padding-inline-start: 0; }
+  .m-tabs button { flex: 1; justify-content: center; padding: 10px 8px; }
+  .m-stats { flex-wrap: wrap; }
+}

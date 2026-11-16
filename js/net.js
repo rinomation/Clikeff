@@ -70,6 +70,14 @@
   };
   /** שומר אצל המנהלת את הסיסמה החדשה שהמערכת יצרה ללקוח */
   N.savePass = (pass) => R.set('licenses/' + uid, { pass, passAt: R.NOW }, { merge: true });
+  /** החלפת סיסמה למנחה מחובר: אימות מחדש עם הסיסמה הנוכחית, ואז הסיסמה החדשה נשמרת גם אצל המנהלת */
+  N.changePassword = async (current, next) => {
+    const u = firebase.auth().currentUser;
+    const cred = firebase.auth.EmailAuthProvider.credential(u.email, current);
+    await u.reauthenticateWithCredential(cred);
+    await u.updatePassword(next);
+    await N.savePass(next).catch(() => {});
+  };
   N.licenseOk = (lic) => !!lic && lic.active !== false && !!lic.expires && lic.expires.toMillis() > Date.now();
   N.authError = (e) => {
     const c = (e && (e.code || e.message)) || '';

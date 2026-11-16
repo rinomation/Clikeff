@@ -7,7 +7,7 @@
   const N = A.Net, R = A.FsRest, $ = A.$, esc = A.esc;
   const GAME_URL = 'https://clikeff.vercel.app/admin';
   const DEMO = /[?&]demo\b/.test(location.search);
-  const st = { user: null, list: [], q: '', filter: 'all', open: null, edit: null, shown: {}, last: null, form: {}, mode: 'signin' };
+  const st = { user: null, list: [], leads: [], leadsDenied: false, tab: 'clients', leadFilter: 'new', q: '', filter: 'all', open: null, edit: null, shown: {}, last: null, form: {}, mode: 'signin' };
 
   const fmt = (ms) => { if (!ms) return '—'; const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
   const daysLeft = (ms) => Math.ceil((ms - Date.now()) / 864e5);
@@ -177,30 +177,84 @@
       '</li>';
   }
 
-  function viewDash() {
-    const c = counts(), q = st.q.trim().toLowerCase();
-    const digits = q.replace(/\D/g, '');
+  /* ---------- פניות מהאתר ---------- */
+  const leadMs = (l) => tms(l.at);
+  function when(ms) {
+    if (!ms) return '';
+    const d = new Date(ms), now = new Date();
+    const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    if (d.toDateString() === now.toDateString()) return 'היום, ' + hm;
+    const y = new Date(now); y.setDate(now.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return 'אתמול, ' + hm;
+    return fmt(ms) + ', ' + hm;
+  }
+  function leadCard(l) {
+    return '<li class="m-lead' + (l.done ? ' is-done' : '') + '">' +
+      '<div class="m-lead-head">' +
+      '<span class="m-av" style="--c:' + colorOf(l.name) + '">' + esc(initial(l)) + '</span>' +
+      '<div class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><small>' + esc(when(leadMs(l))) + '</small></div>' +
+      '<span class="m-badge ' + (l.done ? 'stop' : 'soon') + '">' + (l.done ? 'טופלה' : 'חדשה') + '</span>' +
+      '</div>' +
+      '<div class="m-lead-body">' +
+      '<span class="m-topic">' + esc(l.topic || '') + '</span>' +
+      (l.msg ? '<p class="m-msg-text">' + esc(l.msg) + '</p>' : '') +
+      '<div class="m-contact">' +
+      (l.email ? '<a href="mailto:' + esc(l.email) + '" dir="ltr">' + ic('mail') + esc(l.email) + '</a>' : '') +
+      (l.tel ? '<a href="https://wa.me/' + waNum(l.tel) + '" target="_blank" rel="noopener" dir="ltr">' + ic('send') + esc(prettyPhone(l.tel)) + '</a>' : '') +
+      '</div></div>' +
+      '<div class="m-acts">' +
+      '<button class="btn btn-primary btn-sm" type="button" data-action="lead-client" data-value="' + esc(l.id) + '">' + ic('sparkle') + 'יצירת מנוי</button>' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-action="lead-done" data-value="' + esc(l.id) + '">' + (l.done ? 'החזרה לחדשות' : ic('check') + 'סימון שטופלה') + '</button>' +
+      '<button class="btn btn-ghost btn-sm m-danger" type="button" data-action="lead-del" data-value="' + esc(l.id) + '">מחיקה</button>' +
+      '</div></li>';
+  }
+  function leadsMain() {
+    const nNew = st.leads.filter((l) => !l.done).length, nDone = st.leads.length - nNew;
+    const rows = st.leads.filter((l) => st.leadFilter === 'all' || (st.leadFilter === 'new' ? !l.done : l.done)).sort((x, y) => leadMs(y) - leadMs(x));
+    return '<div class="m-main">' +
+      '<div class="m-tools"><div class="m-filters">' +
+      [['new', 'חדשות', nNew], ['done', 'טופלו', nDone], ['all', 'הכול', st.leads.length]].map((f) =>
+        '<button type="button" class="chip" data-action="lead-filter" data-value="' + f[0] + '" aria-pressed="' + (st.leadFilter === f[0]) + '">' + f[1] + ' <b>' + f[2] + '</b></button>').join('') +
+      '</div></div>' +
+      (st.leadsDenied ? '<div class="m-empty"><b>הפניות עוד לא זמינות</b><span>צריך לפרסם בפיירבייס את כללי האבטחה המעודכנים.</span></div>'
+        : rows.length ? '<ul class="m-rows">' + rows.map(leadCard).join('') + '</ul>'
+        : '<div class="m-empty"><b>' + (st.leadFilter === 'new' ? 'אין פניות חדשות' : 'אין פניות') + '</b><span>מי שימלא את טופס יצירת הקשר באתר יופיע כאן.</span></div>') +
+      '</div>';
+  }
+
+  function clientsMain(c) {
+    const q = st.q.trim().toLowerCase(), digits = q.replace(/\D/g, '');
     const rows = st.list
       .filter((l) => st.filter === 'all' || statusOf(l).k === st.filter)
       .filter((l) => !q || (l.name || '').toLowerCase().indexOf(q) >= 0 || (l.email || '').indexOf(q) >= 0 || (digits && (l.phone || '').indexOf(digits) >= 0))
-      .sort((a, b) => (statusOf(a).k === 'ok' ? 1 : 0) - (statusOf(b).k === 'ok' ? 1 : 0) || expMs(a) - expMs(b));
+      .sort((x, y) => (statusOf(x).k === 'ok' ? 1 : 0) - (statusOf(y).k === 'ok' ? 1 : 0) || expMs(x) - expMs(y));
     const FILTERS = [['all', 'הכול', c.all], ['ok', 'פעילים', c.ok], ['soon', 'מסתיימים בקרוב', c.soon], ['end', 'הסתיימו', c.end], ['stop', 'מושהים', c.stop]];
-    render('<section class="admin-main manage">' +
-      '<div class="m-top"><div><h2>ניהול מנויים</h2><p>כל הלקוחות במקום אחד</p></div>' +
-      '<div class="m-stats">' +
-      '<div><b>' + c.all + '</b><span>לקוחות</span></div>' +
-      '<div class="ok"><b>' + (c.ok + c.soon) + '</b><span>פעילים</span></div>' +
-      '<div class="soon"><b>' + c.soon + '</b><span>מסתיימים החודש</span></div>' +
-      '</div></div>' +
-      '<div class="m-layout">' +
-      '<div class="m-main">' +
+    return '<div class="m-main">' +
       '<div class="m-tools">' +
       '<div class="m-search-wrap">' + ic('search') + '<input class="input m-search" id="m-search" type="search" placeholder="חיפוש לפי שם, מייל או מספר" value="' + esc(st.q) + '"></div>' +
       '<div class="m-filters">' + FILTERS.map((f) => (f[0] === 'all' || f[2] ? '<button type="button" class="chip" data-action="filter" data-value="' + f[0] + '" aria-pressed="' + (st.filter === f[0]) + '">' + f[1] + ' <b>' + f[2] + '</b></button>' : '')).join('') + '</div>' +
       '</div>' +
       (rows.length ? '<ul class="m-rows">' + rows.map(row).join('') + '</ul>'
         : '<div class="m-empty"><b>' + (st.list.length ? 'לא נמצאו לקוחות' : 'עוד אין לקוחות') + '</b><span>' + (st.list.length ? 'נסי חיפוש אחר או סינון אחר.' : 'הלקוח הראשון שתיצרי יופיע כאן.') + '</span></div>') +
+      '</div>';
+  }
+
+  function viewDash() {
+    const c = counts(), nNew = st.leads.filter((l) => !l.done).length;
+    render('<section class="admin-main manage">' +
+      '<div class="m-top"><div><h2>ניהול מנויים</h2><p>כל הלקוחות והפניות במקום אחד</p></div>' +
+      '<div class="m-stats">' +
+      '<div><b>' + c.all + '</b><span>לקוחות</span></div>' +
+      '<div class="ok"><b>' + (c.ok + c.soon) + '</b><span>פעילים</span></div>' +
+      '<div class="soon"><b>' + c.soon + '</b><span>מסתיימים החודש</span></div>' +
+      '<div class="new"><b>' + nNew + '</b><span>פניות חדשות</span></div>' +
+      '</div></div>' +
+      '<div class="m-tabs" role="tablist">' +
+      '<button type="button" role="tab" data-action="tab" data-value="clients" aria-selected="' + (st.tab === 'clients') + '">' + ic('users') + 'לקוחות <b>' + c.all + '</b></button>' +
+      '<button type="button" role="tab" data-action="tab" data-value="leads" aria-selected="' + (st.tab === 'leads') + '">' + ic('mail') + 'פניות מהאתר ' + (nNew ? '<b class="hot">' + nNew + '</b>' : '<b>0</b>') + '</button>' +
       '</div>' +
+      '<div class="m-layout">' +
+      (st.tab === 'leads' ? leadsMain() : clientsMain(c)) +
       newPanel() +
       '</div></section>');
 
@@ -210,7 +264,7 @@
       ['name', 'email', 'phone'].forEach((k) => { const el = $('#n-' + k); if (el) el.addEventListener('input', () => { st.form[k] = el.value; }); });
     }
     const s = $('#m-search');
-    s.addEventListener('input', () => { st.q = s.value; const pos = s.selectionStart; viewDash(); const s2 = $('#m-search'); s2.focus(); s2.setSelectionRange(pos, pos); });
+    if (s) s.addEventListener('input', () => { st.q = s.value; const pos = s.selectionStart; viewDash(); const s2 = $('#m-search'); s2.focus(); s2.setSelectionRange(pos, pos); });
   }
 
   /* ---------- פעולות ---------- */
@@ -228,6 +282,8 @@
 
   async function loadList() {
     if (DEMO) return true;
+    try { st.leads = await R.list('leads'); st.leadsDenied = false; }
+    catch (e) { st.leads = []; st.leadsDenied = /permission/.test(e.code || ''); }
     try { st.list = await R.list('licenses'); return true; }
     catch (e) {
       st.list = [];
@@ -302,6 +358,13 @@
     } catch (e) { A.toast(N.errorText(e), { type: 'bad' }); }
   }
 
+  async function leadPatch(id, data) {
+    try {
+      if (!DEMO) await R.set('leads/' + id, data, { merge: true });
+      Object.assign(st.leads.find((x) => x.id === id) || {}, data);
+      viewDash();
+    } catch (e) { A.toast(N.errorText(e), { type: 'bad' }); }
+  }
   const find = (id) => st.list.find((x) => x.id === id);
   async function renew(id) {
     const l = find(id); if (!l) return;
@@ -337,6 +400,24 @@
       case 'retry': try { await st.user.getIdToken(true); } catch (err) { /* */ } return route();
       case 'months': st.form.months = Number(v); return viewDash();
       case 'filter': st.filter = v; return viewDash();
+      case 'tab': st.tab = v; return viewDash();
+      case 'lead-filter': st.leadFilter = v; return viewDash();
+      case 'lead-client': {
+        const l = st.leads.find((x) => x.id === v); if (!l) return;
+        st.last = null; st.form = { name: l.name, email: l.email, phone: l.tel, months: 12 };
+        st.tab = 'clients'; viewDash();
+        const side = $('.m-side'); if (side) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        A.toast('הפרטים הועתקו לטופס "לקוח חדש". בודקים ולוחצים "יצירת מנוי".', { type: 'ok', ms: 5000 });
+        if (!l.done) leadPatch(l.id, { done: true });
+        return;
+      }
+      case 'lead-done': { const l = st.leads.find((x) => x.id === v); return l && leadPatch(v, { done: !l.done }); }
+      case 'lead-del': {
+        const l = st.leads.find((x) => x.id === v); if (!l || !confirm('למחוק את הפנייה של ' + (l.name || '') + '?')) return;
+        try { if (!DEMO) await R.del('leads/' + v); st.leads = st.leads.filter((x) => x.id !== v); viewDash(); A.toast('הפנייה נמחקה', { type: 'ok' }); }
+        catch (err) { A.toast(N.errorText(err), { type: 'bad' }); }
+        return;
+      }
       case 'open': st.open = st.open === v ? null : v; st.edit = null; return viewDash();
       case 'show-pass': st.shown[v] = !st.shown[v]; return viewDash();
       case 'copy-pass': { const l = find(v); return l && copy(l.pass, 'הסיסמה הועתקה'); }
@@ -368,6 +449,11 @@
       { id: 'c', name: 'תלמוד תורה נועם', email: 'noam.tt@gmail.com', pass: 'Pqzd-2266', active: true, expires: T(-6), createdAt: T(-371) },
       { id: 'd', name: 'קייטנת שמחה', email: 'simcha.camp@gmail.com', phone: '0548800112', pass: 'Rtbe-7734', active: false, expires: T(120), createdAt: T(-60) },
       { id: 'e', name: 'ישיבת אור התורה', email: 'or.hatorah@gmail.com', phone: '0533344556', pass: 'Mxkc-3958', active: true, expires: T(230), createdAt: T(-135) }
+    ];
+    st.leads = [
+      { id: 'l1', name: 'משה כהן', email: 'moshe.c@gmail.com', tel: '0541234567', topic: 'רכישת מנוי שנתי', msg: 'שלום, אני מלמד בתלמוד תורה בבני ברק, כ-25 תלמידים בכיתה. אשמח לפרטים על מנוי לשנה.', at: T(-0.05), done: false },
+      { id: 'l2', name: 'רבקה לוי', email: '', tel: '0527654321', topic: 'חידון לאירוע', msg: 'מסיבת חנוכה לבנות, בערך 60 משתתפות.', at: T(-1.2), done: false },
+      { id: 'l3', name: 'יעקב פרידמן', email: 'yfr@gmail.com', tel: '', topic: 'יש לי שאלה', msg: 'האם זה עובד גם עם טאבלטים של המוסד?', at: T(-6), done: true }
     ];
     viewDash();
     return;
