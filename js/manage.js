@@ -71,6 +71,18 @@
       '</div></section>');
   }
 
+  /** שלב חד-פעמי: מספר החשבון של המנהלת נכנס לכללי האבטחה */
+  function viewSetup() {
+    render('<section class="auth"><div class="card auth-card no-lic">' +
+      '<img src="' + A.img('crown') + '" alt="">' +
+      '<h2>החשבון שלך מוכן!</h2>' +
+      '<p>נשאר צעד אחד: להכניס לכללי האבטחה את מספר החשבון שלך. שלחי לי את המספר הזה:</p>' +
+      '<code class="m-uid" dir="ltr">' + esc(st.user.uid) + '</code>' +
+      '<button class="btn btn-primary btn-block" type="button" data-action="copy-uid">' + A.icon('copy') + 'העתקת המספר</button>' +
+      '<button class="link-btn" type="button" data-action="retry">פרסמתי את הכללים, לנסות שוב</button>' +
+      '</div></section>');
+  }
+
   function viewNotOwner() {
     render('<section class="auth"><div class="card auth-card no-lic">' +
       '<img src="' + A.img('door') + '" alt="">' +
@@ -172,16 +184,21 @@
     st.user = u && !u.isAnonymous ? u : null;
     if (!st.user) return viewLogin();
     if (String(st.user.email || '').toLowerCase() !== N.OWNER) return viewNotOwner();
-    if (!st.user.emailVerified) return viewVerify();
     N.useUser(st.user);
     render('<section class="auth"><div class="auth-wait"><span class="spinner"></span>טוענים את הלקוחות…</div></section>');
-    await loadList();
+    const ok = await loadList();
+    if (ok === 'denied') return viewSetup();
     viewDash();
   }
 
   async function loadList() {
-    try { st.list = await R.list('licenses'); }
-    catch (e) { st.list = []; A.toast(/permission/.test(e.code || '') ? 'אין הרשאה לקרוא את המנויים. האם כללי האבטחה החדשים פורסמו בפיירבייס?' : N.errorText(e), { type: 'bad', ms: 8000 }); }
+    try { st.list = await R.list('licenses'); return true; }
+    catch (e) {
+      st.list = [];
+      if (/permission/.test(e.code || '')) return 'denied';
+      A.toast(N.errorText(e), { type: 'bad', ms: 8000 });
+      return false;
+    }
   }
 
   async function doSignIn() {
@@ -198,7 +215,6 @@
     if (pass !== pass2) return viewLogin({ email, error: 'שתי הסיסמאות לא זהות' });
     try {
       await N.signUp(email, pass);
-      await N.sendVerify().catch(() => {});
       st.mode = 'signin';
       await route();
     } catch (e) {
@@ -296,6 +312,12 @@
         .catch(() => A.toast('לא הצלחנו להעתיק. סמני את הפרטים והעתיקי ידנית.', { type: 'bad' }));
       return;
     }
+    if (act === 'copy-uid') {
+      (navigator.clipboard ? navigator.clipboard.writeText(st.user.uid) : Promise.reject())
+        .then(() => A.toast('המספר הועתק', { type: 'ok' })).catch(() => A.toast(st.user.uid));
+      return;
+    }
+    if (act === 'retry') { try { await st.user.getIdToken(true); } catch (err) { /* */ } return route(); }
     if (act === 'renew') return renew(v);
     if (act === 'toggle') return toggle(v);
     if (act === 'reset') return resetPw(v);

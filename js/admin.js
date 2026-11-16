@@ -21,6 +21,11 @@
     const V = A.AdminView;
     const body = V[screen](M.data);
     $('#app').innerHTML = V.header({ step: STEP[screen], muted: M.muted, user: M.user }) + body;
+    if (screen === 'resetPw') {
+      const f = $('#reset-form');
+      if (f) f.addEventListener('submit', (e) => { e.preventDefault(); if (M.handlers.resetSave) M.handlers.resetSave(); });
+      const pw = $('#reset-pass'); if (pw) pw.focus();
+    }
     if (screen === 'login') {
       const f = $('#login-form');
       if (f) f.addEventListener('submit', (e) => { e.preventDefault(); if (M.handlers.login) M.handlers.login(); });

@@ -41,3 +41,4 @@
 }
 .m-who a { color: var(--ok); font-weight: 700; }
 .field-label small { color: var(--text-mute); font-weight: 500; }
+.m-uid { display: block; width: 100%; padding: 14px 16px; border-radius: 12px; background: rgba(0, 0, 0, .3); font: 700 1.05rem "Fredoka", monospace; color: var(--cyan); overflow-wrap: anywhere; text-align: center; user-select: all; }

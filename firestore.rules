@@ -5,7 +5,7 @@ rules_version = '2';
 // * משתתף יכול לכתוב רק את הרשומה של עצמו, עם שדות ומגבלות קבועים.
 // * משתתף קורא רק את מסמך החדר ואת הרשומה שלו; המנהל קורא את כל המשתתפים.
 // * פתיחת חדר רק למנחה עם מנוי בתוקף (licenses), או למנהלת המערכת.
-// * את המנויים יוצרת ומעדכנת רק מנהלת המערכת (מייל מאומת).
+// * את המנויים יוצרת ומעדכנת רק מנהלת המערכת.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -14,10 +14,9 @@ service cloud.firestore {
     function roomData(code) { return get(/databases/$(database)/documents/rooms/$(code)).data; }
     function isHost(code) { return signedIn() && roomData(code).hostUid == me(); }
 
-    // מנהלת המערכת: רק עם המייל הזה, ורק אחרי אימות המייל
+    // מנהלת המערכת: לפי מספר החשבון הקבוע שלה
     function isOwner() {
-      return signedIn() && request.auth.token.email == 'rinatya3847@gmail.com'
-        && request.auth.token.email_verified == true;
+      return signedIn() && me() == 'OWNER_UID';
     }
     function licPath() { return /databases/$(database)/documents/licenses/$(me()); }
     function licensed() {

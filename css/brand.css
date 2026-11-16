@@ -445,3 +445,4 @@ body:has(.stage-clock.is-urgent)::after { content: ""; position: fixed; inset: 0
 
 .form-error svg { width: 18px; height: 18px; flex: none; }
 .auth-card .form-error { justify-content: center; text-align: center; }
+.auth-sub { text-align: center; color: var(--text-soft); margin: -8px 0 10px; }

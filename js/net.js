@@ -42,7 +42,16 @@
   };
   N.useUser = (u) => { uid = u ? u.uid : null; ready = u ? Promise.resolve(uid) : null; };
   N.user = () => (window.firebase && firebase.apps.length ? firebase.auth().currentUser : null);
-  N.isOwner = (u) => !!u && !u.isAnonymous && String(u.email || '').toLowerCase() === N.OWNER && !!u.emailVerified;
+  N.isOwner = (u) => !!u && !u.isAnonymous && String(u.email || '').toLowerCase() === N.OWNER;
+  /* קישורים מהמיילים של פיירבייס (סיסמה חדשה, אימות) מגיעים לדף שלנו */
+  N.actionFromUrl = () => {
+    const q = new URLSearchParams(location.search);
+    const mode = q.get('mode'), code = q.get('oobCode');
+    return mode && code ? { mode, code } : null;
+  };
+  N.checkResetCode = (code) => firebase.auth().verifyPasswordResetCode(code);
+  N.confirmReset = (code, pass) => firebase.auth().confirmPasswordReset(code, pass);
+  N.applyCode = (code) => firebase.auth().applyActionCode(code);
   N.signIn = (email, pass) => firebase.auth().signInWithEmailAndPassword(String(email).trim(), pass).then((c) => c.user);
   N.signUp = (email, pass) => firebase.auth().createUserWithEmailAndPassword(String(email).trim(), pass).then((c) => c.user);
   N.signOut = () => firebase.auth().signOut().then(() => { uid = null; ready = null; });

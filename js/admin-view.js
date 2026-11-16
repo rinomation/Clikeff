@@ -83,6 +83,21 @@
         '<p class="auth-note">עוד אין לכם מנוי? <a href="https://clikeff-site.vercel.app/#contact" target="_blank" rel="noopener">לרכישת מנוי שנתי</a></p>') +
     '</section>';
 
+  /* ---------- סיסמה חדשה (מהקישור במייל) ---------- */
+  V.resetPw = (d) =>
+    '<section class="auth">' +
+    '<div class="auth-logo">' + A.logo('logo-lg', true) + '</div>' +
+    '<form class="card auth-card" id="reset-form" novalidate>' +
+    '<h2>בחירת סיסמה חדשה</h2>' +
+    (d.email ? '<p class="auth-sub">לחשבון <bdi>' + esc(d.email) + '</bdi></p>' : '') +
+    '<label class="field"><span class="field-label">סיסמה חדשה (לפחות 6 תווים)</span>' +
+    '<input class="input" id="reset-pass" type="password" dir="ltr" autocomplete="new-password"></label>' +
+    '<label class="field"><span class="field-label">שוב את הסיסמה</span>' +
+    '<input class="input" id="reset-pass2" type="password" dir="ltr" autocomplete="new-password"></label>' +
+    '<p class="form-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
+    '<button class="btn btn-primary btn-lg btn-block" type="submit">שמירת הסיסמה</button>' +
+    '</form></section>';
+
   /* ---------- המנוי לא פעיל ---------- */
   V.noLicense = (d) => {
     const lic = d.lic, ended = lic && lic.expires && lic.expires.toMillis() <= Date.now();
