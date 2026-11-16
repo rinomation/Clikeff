@@ -21,7 +21,7 @@
     });
   }
   S.showSetup = () => { S.view = 'setup'; M.render('setup', setupData()); };
-  S.showHome = () => { S.view = 'home'; M.render('home', { license: S.license, owner: S.owner }); };
+  S.showHome = () => { S.view = 'home'; M.render('home', { license: S.license, owner: S.owner, name: S.owner ? null : (S.license && S.license.name) }); };
   S.showLogin = (d) => { S.view = 'login'; M.user = null; M.render('login', Object.assign({ email: A.store.get('hostEmail', ''), form: true }, d || {})); };
   S.showNoLicense = (lic, email) => { S.view = 'nolicense'; M.render('noLicense', { lic, email }); };
 
@@ -516,7 +516,7 @@
     await A.Net.signOut().catch(() => {});
     ['hostBank', 'hostCfg', 'hostRoom', 'hostUid'].forEach((k) => A.store.del(k));
     S.bank = null; S.cfg = Object.assign({}, S.defaults);
-    S.license = null; S.owner = false;
+    S.license = null; S.owner = false; M.userName = null;
     S.showLogin();
   };
 
@@ -530,12 +530,14 @@
     }
     A.Net.useUser(u);
     M.user = u.email;
+    M.userName = null;
     S.owner = A.Net.isOwner(u);
     S.license = null;
     if (!S.owner) {
       const lic = await A.Net.license().catch(() => null);
       if (!A.Net.licenseOk(lic)) return S.showNoLicense(lic, u.email);
       S.license = lic;
+      M.userName = lic.name || null;
     }
     S.showHome();
     return startHost();

@@ -449,3 +449,13 @@ body:has(.stage-clock.is-urgent)::after { content: ""; position: fixed; inset: 0
 .new-pass { display: block; margin: 6px 0 10px; padding: 16px; border-radius: 14px; background: rgba(0, 0, 0, .3); color: var(--cyan); font: 700 1.8rem "Fredoka", monospace; text-align: center; letter-spacing: .06em; user-select: all; }
 .m-two-btn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .lic-line .link-btn { font-size: .95rem; }
+
+/* שם הלקוח: בכותרת ובמסך הפתיחה */
+.who-chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 5px; border-radius: 999px; background: rgba(255, 255, 255, .06); border: 1px solid var(--border); font-size: .92rem; max-width: 220px; animation: pop-in .45s var(--ease-bounce) both; }
+.who-chip i { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 800 .95rem 'Rubik', sans-serif; font-style: normal; color: var(--night); background: var(--cyan); }
+.who-chip b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-top .actions { align-items: center; }
+.home-hello { font-size: clamp(1.3rem, 2.6vw, 1.8rem); font-weight: 700; color: var(--text-soft); margin-bottom: -4px; animation: hello-in .7s var(--ease-bounce) .1s both; }
+.home-hello b { color: var(--cyan); font-weight: 900; }
+@keyframes hello-in { from { opacity: 0; transform: translateY(-14px) scale(.9); } }
+@media (max-width: 640px) { .who-chip b { display: none; } .who-chip { padding: 4px; } }

@@ -20,7 +20,7 @@
     M.data = data || M.data;
     const V = A.AdminView;
     const body = V[screen](M.data);
-    $('#app').innerHTML = V.header({ step: STEP[screen], muted: M.muted, user: M.user }) + body;
+    $('#app').innerHTML = V.header({ step: STEP[screen], muted: M.muted, user: M.user, userName: M.userName }) + body;
     if (screen === 'changePw') {
       const f = $('#change-form');
       if (f) f.addEventListener('submit', (e) => { e.preventDefault(); if (M.handlers.changeSave) M.handlers.changeSave(); });

@@ -30,6 +30,7 @@
     '</nav>') +
     '<span class="spacer"></span>' +
     '<div class="actions">' + A.theme.button() +
+    (d.userName ? '<span class="who-chip" title="' + esc(d.user || '') + '"><i>' + esc(String(d.userName).trim()[0] || '?') + '</i><b>' + esc(d.userName) + '</b></span>' : '') +
     (d.user ? '<button class="icon-btn" type="button" data-action="logout" aria-label="יציאה מהחשבון" title="יציאה (' + esc(d.user) + ')">' + A.icon('door') + '</button>' : '') +
     '<button class="icon-btn" type="button" data-action="mute" aria-pressed="' + !!d.muted + '" aria-label="' + (d.muted ? 'הפעלת צליל' : 'השתקה') + '">' +
     A.icon(d.muted ? 'mute' : 'volume') + '</button></div>' +
@@ -42,6 +43,7 @@
   V.home = (d) => (d = d || {}, 
     '<section class="home">' +
     '<div class="home-hero">' +
+    (d.name ? '<p class="home-hello">שלום, <b>' + esc(d.name) + '</b>!</p>' : '') +
     '<h1 class="home-title">' + A.logo('logo-xl', true) + '</h1>' +
     '<p class="tagline" aria-label="לוחצים, נהנים, משחקים!"><span style="--i:0">לוחצים,</span> <span style="--i:1">נהנים,</span> <span style="--i:2">משחקים!</span></p>' +
     '<p class="home-sub">השאלה עולה על המסך הגדול, וכל אחד עונה בלחיצה מהמכשיר שלו.</p>' +
