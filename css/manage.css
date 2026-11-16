@@ -150,3 +150,14 @@
 .wa-bubble::before { content: ""; position: absolute; top: 0; inset-inline-start: -8px; border: 8px solid transparent; border-top-color: #005c4b; border-inline-end-color: #005c4b; }
 .wa-bubble b { font-weight: 700; }
 .wa-time { position: absolute; bottom: 4px; inset-inline-end: 10px; font-size: .7rem; color: rgba(233, 237, 239, .6); direction: ltr; }
+
+/* ---------- חלון המייל ---------- */
+.m-modal { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 18px; background: rgba(2, 8, 20, .75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: rise-in .25s ease-out both; }
+.m-modal-box { width: min(760px, 100%); max-height: calc(100vh - 36px); display: grid; grid-template-rows: auto auto 1fr auto auto; gap: 12px; padding: 18px; border-radius: 22px; background: linear-gradient(160deg, #10284f, #0a1c3c); border: 1px solid rgba(46, 230, 255, .25); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .9); }
+.m-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.m-modal-head h3 { font-size: 1.3rem; font-weight: 900; }
+.m-mail-to { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 10px 14px; border-radius: 12px; background: rgba(0, 0, 0, .25); color: var(--text-mute); font-size: .92rem; }
+.m-mail-to b { color: var(--text); }
+.m-mail-frame { width: 100%; height: min(62vh, 640px); border: 0; border-radius: 14px; background: #eef2f7; }
+.m-modal-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.m-modal .m-hint { margin: 0; }

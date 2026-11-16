@@ -7,7 +7,7 @@
   const N = A.Net, R = A.FsRest, $ = A.$, esc = A.esc;
   const GAME_URL = 'https://clikeff.vercel.app/admin';
   const DEMO = /[?&]demo\b/.test(location.search);
-  const st = { user: null, list: [], leads: [], leadsDenied: false, tab: 'clients', leadFilter: 'new', q: '', filter: 'all', open: null, edit: null, shown: {}, last: null, form: {}, mode: 'signin' };
+  const st = { user: null, list: [], leads: [], leadsDenied: false, tab: 'clients', leadFilter: 'new', q: '', filter: 'all', open: null, edit: null, shown: {}, last: null, form: {}, mode: 'signin', mail: false };
 
   const fmt = (ms) => { if (!ms) return '—'; const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
   const daysLeft = (ms) => Math.ceil((ms - Date.now()) / 864e5);
@@ -70,6 +70,102 @@
   const plain = (x) => message(x).split('```').join('').replace(/\*/g, '').replace(/(^|\n)_|_(\n|$)/g, '$1$2');
   const copy = (t, ok) => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
     .then(() => A.toast(ok || 'הועתק', { type: 'ok' })).catch(() => A.toast('לא הצלחנו להעתיק', { type: 'bad' }));
+
+  /* =========================================================
+     מייל "המנוי מוכן" בעיצוב HTML (טבלאות וסגנון מוטבע, כמו שתוכנות מייל אוהבות)
+     ========================================================= */
+  const LOGO = 'https://clikeff.vercel.app/assets/email-logo.png';
+  function emailHtml(x) {
+    const C = { navy: '#06142b', text: '#1d2b45', mute: '#5b6b85', box: '#f2f6fb', line: '#e3e9f2', coral: '#ff5a5f' };
+    const F = "font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;";
+    const step = (n, color, title, sub) =>
+      '<tr><td style="padding:8px 0 8px 12px;vertical-align:top;width:40px">' +
+      '<div style="width:34px;height:34px;line-height:34px;border-radius:50%;background:' + color + ';color:#ffffff;' + F + 'font-size:17px;font-weight:bold;text-align:center">' + n + '</div></td>' +
+      '<td style="padding:8px 0;' + F + 'font-size:15px;line-height:1.6;color:' + C.text + '"><b>' + title + '</b><br><span style="color:' + C.mute + '">' + sub + '</span></td></tr>';
+    return '' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f7;direction:rtl"><tr><td align="center" style="padding:24px 12px">' +
+      '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;direction:rtl;text-align:right">' +
+      /* כותרת כהה עם הלוגו */
+      '<tr><td align="center" style="background:' + C.navy + ';padding:30px 24px 24px">' +
+      '<img src="' + LOGO + '" width="230" alt="Clikeff" style="display:block;width:230px;max-width:72%;height:auto;border:0;margin:0 auto;color:#ffffff;' + F + 'font-size:32px;font-weight:bold">' +
+      '<div style="' + F + 'font-size:16px;font-weight:bold;color:#2ee6ff;margin-top:8px">לוחצים, נהנים, משחקים!</div></td></tr>' +
+      /* ברכה */
+      '<tr><td style="padding:30px 30px 4px;' + F + 'font-size:16px;line-height:1.7;color:' + C.text + '">' +
+      '<div style="' + F + 'font-size:25px;line-height:1.3;font-weight:bold;color:' + C.navy + ';margin:0 0 8px">ברוכים הבאים, ' + esc(x.name) + '! 🎉</div>' +
+      'המנוי שלכם ל-Clikeff מוכן, ואפשר להתחיל לשחק.</td></tr>' +
+      /* פרטי הכניסה */
+      '<tr><td style="padding:16px 30px 8px">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' + C.box + ';border:1px solid ' + C.line + ';border-radius:14px"><tr><td style="padding:18px 20px;' + F + 'font-size:15px;line-height:2;color:' + C.text + '">' +
+      '<div style="' + F + 'font-size:16px;font-weight:bold;color:' + C.navy + ';margin-bottom:4px">🔐 פרטי הכניסה למנחה</div>' +
+      'קישור: <a href="' + GAME_URL + '" style="color:#0a8fa3;font-weight:bold;text-decoration:none">' + GAME_URL + '</a><br>' +
+      'מייל: <b>' + esc(x.email) + '</b><br>' +
+      'סיסמה: <span style="display:inline-block;font-family:\'Courier New\',Courier,monospace;font-size:18px;font-weight:bold;color:' + C.navy + ';background:#ffffff;border:1px dashed #9fb3cf;border-radius:8px;padding:0 10px;direction:ltr">' + esc(x.pass) + '</span><br>' +
+      'בתוקף עד: <b>' + fmt(x.expires) + '</b>' +
+      '</td></tr></table></td></tr>' +
+      /* כפתור */
+      '<tr><td align="center" style="padding:14px 30px 22px">' +
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:' + C.coral + ';border-radius:999px">' +
+      '<a href="' + GAME_URL + '" style="display:inline-block;padding:14px 36px;' + F + 'font-size:17px;font-weight:bold;color:#ffffff;text-decoration:none">כניסה למשחק</a>' +
+      '</td></tr></table></td></tr>' +
+      /* איך מתחילים */
+      '<tr><td style="padding:4px 30px 4px">' +
+      '<div style="' + F + 'font-size:18px;font-weight:bold;color:' + C.navy + ';margin-bottom:4px">🎯 איך מתחילים?</div>' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
+      step(1, '#ff5a5f', 'נכנסים לקישור', 'ולוחצים "פתיחת חידון חדש"') +
+      step(2, '#3d7bff', 'בוחרים שאלות', 'מהמאגר המוכן, מקובץ אקסל, או כותבים לבד') +
+      step(3, '#14c49a', 'פותחים את המשחק', 'ומציגים את המסך על המקרן') +
+      '</table></td></tr>' +
+      /* המשתתפים */
+      '<tr><td style="padding:14px 30px 28px">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fff6e5;border-radius:14px"><tr><td style="padding:16px 20px;' + F + 'font-size:15px;line-height:1.7;color:' + C.text + '">' +
+      '<b style="color:#a35f00">🙋 איך המשתתפים נכנסים?</b><br>' +
+      'על המקרן מופיעים קישור וקוד של 6 ספרות. כל אחד נכנס מהטאבלט או מהמחשב, מקליד את הקוד, בוחר שם ודמות, ומופיע על המסך. בלי הרשמה ובלי התקנה!' +
+      '</td></tr></table></td></tr>' +
+      /* תחתית */
+      '<tr><td align="center" style="background:' + C.box + ';border-top:1px solid ' + C.line + ';padding:22px 24px;' + F + 'font-size:14px;line-height:1.9;color:' + C.mute + '">' +
+      '<b style="color:' + C.navy + '">יש שאלה? אני כאן בשבילכם 💬</b><br>' +
+      '<a href="tel:+972504103847" style="color:' + C.text + ';text-decoration:none">050-410-3847</a> &nbsp;|&nbsp; ' +
+      '<a href="mailto:rinatya3847@gmail.com" style="color:' + C.text + ';text-decoration:none">rinatya3847@gmail.com</a></td></tr>' +
+      '</table>' +
+      '<div style="' + F + 'font-size:12px;color:#94a3b8;margin-top:14px">Clikeff · לוחצים, נהנים, משחקים!</div>' +
+      '</td></tr></table>';
+  }
+  const emailDoc = (x) => '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#eef2f7">' + emailHtml(x) + '</body></html>';
+  const MAIL_SUBJECT = 'המנוי שלכם ל-Clikeff מוכן! 🎉';
+
+  /** העתקה עם העיצוב (מדביקים במייל חדש ב-Gmail והעיצוב נשמר) */
+  async function copyRich(html, text) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' })
+      })]);
+      return true;
+    } catch (e) {
+      const d = document.createElement('div');
+      d.contentEditable = 'true'; d.style.cssText = 'position:fixed;left:-9999px;top:0';
+      d.innerHTML = html; document.body.appendChild(d);
+      const r = document.createRange(); r.selectNodeContents(d);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      const ok = document.execCommand('copy');
+      sel.removeAllRanges(); d.remove();
+      return ok;
+    }
+  }
+
+  function mailModal(x) {
+    return '<div class="m-modal" role="dialog" aria-modal="true" aria-label="המייל ללקוח">' +
+      '<div class="m-modal-box">' +
+      '<div class="m-modal-head"><h3>המייל ל' + esc(x.name) + '</h3><button class="icon-btn" type="button" data-action="mail-close" aria-label="סגירה">' + A.icon('x') + '</button></div>' +
+      '<div class="m-mail-to"><span>אל: <b dir="ltr">' + esc(x.email) + '</b></span><span>נושא: <b>' + esc(MAIL_SUBJECT) + '</b></span></div>' +
+      '<iframe class="m-mail-frame" title="תצוגת המייל" srcdoc="' + esc(emailDoc(x).split(LOGO).join(location.origin + '/assets/email-logo.png')) + '"></iframe>' +
+      '<div class="m-modal-acts">' +
+      '<button class="btn btn-accent btn-lg" type="button" data-action="mail-copy">' + ic('copy') + 'העתקת המייל המעוצב</button>' +
+      '<a class="btn btn-ghost btn-lg" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent(MAIL_SUBJECT) + '">' + ic('mail') + 'פתיחת מייל חדש ללקוח</a>' +
+      '</div>' +
+      '<p class="m-hint">מעתיקים, פותחים מייל חדש, ומדביקים בגוף המייל (Ctrl+V). העיצוב נשמר.</p>' +
+      '</div></div>';
+  }
 
   /* ---------- מסגרת ---------- */
   function header() {
@@ -144,10 +240,10 @@
         '<dt>סיסמה</dt><dd dir="ltr" class="pw">' + esc(x.pass) + '</dd>' +
         '<dt>בתוקף עד</dt><dd>' + fmt(x.expires) + '</dd></dl>' +
         '<div class="m-col">' +
-        '<a class="btn btn-accent btn-block" href="https://wa.me/' + waNum(x.phone) + '?text=' + encodeURIComponent(message(x)) + '" target="_blank" rel="noopener">' + ic('send') + 'שליחה בוואטסאפ</a>' +
+        '<button class="btn btn-accent btn-block" type="button" data-action="mail-open">' + ic('mail') + 'תצוגת המייל והעתקה</button>' +
         '<div class="m-two">' +
-        '<button class="btn btn-ghost" type="button" data-action="copy-msg">' + ic('copy') + 'העתקה</button>' +
-        '<a class="btn btn-ghost" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent('המנוי שלך ל-Clikeff') + '&body=' + encodeURIComponent(plain(x)) + '">' + ic('mail') + 'במייל</a>' +
+        '<button class="btn btn-ghost" type="button" data-action="copy-msg">' + ic('copy') + 'העתקת טקסט</button>' +
+        '<a class="btn btn-ghost" href="https://wa.me/' + waNum(x.phone) + '?text=' + encodeURIComponent(message(x)) + '" target="_blank" rel="noopener">' + ic('send') + 'וואטסאפ</a>' +
         '</div>' +
         '<button class="link-btn" type="button" data-action="new-again">יצירת לקוח נוסף</button>' +
         '</div></aside>';
@@ -291,7 +387,7 @@
       '<div class="m-layout">' +
       (st.tab === 'leads' ? leadsMain() : clientsMain(c)) +
       newPanel() +
-      '</div></section>');
+      '</div></section>' + (st.mail && st.last ? mailModal(st.last) : ''));
 
     const form = $('#m-new');
     if (form) {
@@ -476,6 +572,14 @@
       case 'attach-cancel': st.form.exists = false; st.form.error = null; return viewDash();
       case 'filter': st.filter = v; return viewDash();
       case 'tab': st.tab = v; return viewDash();
+      case 'mail-open': st.mail = true; return viewDash();
+      case 'mail-close': st.mail = false; return viewDash();
+      case 'mail-copy': {
+        if (!st.last) return;
+        const ok = await copyRich(emailHtml(st.last), plain(st.last));
+        A.toast(ok ? 'המייל הועתק! פותחים מייל חדש ומדביקים (Ctrl+V)' : 'לא הצלחנו להעתיק', { type: ok ? 'ok' : 'bad', ms: 6000 });
+        return;
+      }
       case 'lead-filter': st.leadFilter = v; return viewDash();
       case 'lead-client': {
         const l = st.leads.find((x) => x.id === v); if (!l) return;
@@ -497,7 +601,7 @@
       case 'show-pass': st.shown[v] = !st.shown[v]; return viewDash();
       case 'copy-pass': { const l = find(v); return l && copy(l.pass, 'הסיסמה הועתקה'); }
       case 'copy-msg': return st.last && copy(message(st.last), 'ההודעה הועתקה. מדביקים בוואטסאפ, והעיצוב נשמר.');
-      case 'new-again': { st.last = null; st.form = {}; viewDash(); const n = $('#n-name'); if (n) n.focus(); return; }
+      case 'new-again': { st.mail = false; st.last = null; st.form = {}; viewDash(); const n = $('#n-name'); if (n) n.focus(); return; }
       case 'resend': {
         const l = find(v); if (!l) return;
         st.last = { name: l.name || '', email: l.email, pass: l.pass, phone: l.phone, expires: expMs(l) };
