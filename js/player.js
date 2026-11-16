@@ -122,6 +122,8 @@
       case 'prev': if (P.handlers.onPrev) P.handlers.onPrev(); break;
       case 'next': if (P.handlers.onNext) P.handlers.onNext(); break;
       case 'finish': if (P.handlers.onFinish) P.handlers.onFinish(); break;
+      case 'leave': if (P.handlers.onLeave) P.handlers.onLeave(true); break;
+      case 'leave-done': if (P.handlers.onLeave) P.handlers.onLeave(false); break;
     }
   });
 

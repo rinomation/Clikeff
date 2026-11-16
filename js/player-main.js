@@ -16,8 +16,8 @@
     try {
       await A.Net.init();
       const room = await A.Net.join(d.code, d.name, d.avatar);
-      M.session = d;
-      A.store.set('session', d);
+      M.session = Object.assign({}, d, { at: Date.now() });
+      A.store.set('session', M.session);
       M.lastWrite = Date.now();
       watch(d.code);
       onRoom(room);
@@ -159,6 +159,18 @@
 
   /* כפתורים */
   P.handlers.onJoin = (d) => join(d, false);
+  P.handlers.onLeave = async (ask) => {
+    if (ask) {
+      const ok = await P.ask({ img: 'door', title: 'לצאת מהמשחק?', text: 'אפשר להיכנס אחר כך שוב עם הקוד.', yes: 'כן, לצאת', no: 'להישאר' });
+      if (!ok) return;
+    }
+    if (M.session) A.Net.updateMe(M.session.code, { online: false }).catch(() => {});
+    const prev = M.session || {};
+    leave();
+    if (location.search) history.replaceState(null, '', location.pathname);
+    /* שומרים את השם והדמות, כדי שלא יצטרכו לבחור שוב */
+    P.showJoin({ name: prev.name, avatar: prev.avatar });
+  };
   P.handlers.onAnswer = (i) => (M.room && M.room.mode === 'sync' ? A.SyncPlayer.answer(i) : A.Game.answer(i));
   P.handlers.onPrev = () => A.Game.go(-1);
   P.handlers.onNext = () => A.Game.go(1);
@@ -191,7 +203,9 @@
     const s = A.store.get('session', null);
     const params = new URLSearchParams(location.search);
     const urlCode = (params.get('code') || '').replace(/\D/g, '');
-    if (s && s.code && (!urlCode || urlCode === s.code)) {
+    const fresh = s && s.at && Date.now() - s.at < 6 * 3600 * 1000;
+    if (s && !fresh) A.store.del('session');
+    if (s && fresh && s.code && (!urlCode || urlCode === s.code)) {
       P.render('waiting', Object.assign({}, s, { message: 'מתחברים מחדש…' }));
       join(s, true);
       /* צליל מחייב נגיעה — הנגיעה הראשונה משחררת אותו */

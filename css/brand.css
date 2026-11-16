@@ -465,3 +465,7 @@ body:has(.stage-clock.is-urgent)::after { content: ""; position: fixed; inset: 0
 .jp-host b { color: var(--amber); font-weight: 900; }
 .wait-host { font-size: 1.15rem; color: var(--text-soft); margin-top: -4px; }
 .wait-host b { color: var(--amber); font-weight: 800; }
+
+/* יציאה ממשחק אצל הילד */
+.leave-btn { margin-top: 14px; font-size: .95rem; opacity: .85; }
+.new-game-btn { margin-top: 16px; }

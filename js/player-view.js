@@ -61,6 +61,7 @@
     '<div class="wait-status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>' +
     (d.message ? esc(d.message) : 'מחכים שהמנחה יתחיל') + '</div>' +
     '<p class="wait-hint">המשחק יתחיל לבד ברגע שהמנחה ילחץ "התחל". כדאי להגביר את הצליל 🔊</p>' +
+    '<button class="link-btn leave-btn" type="button" data-action="leave">יציאה, כניסה למשחק אחר</button>' +
     '</section>';
 
   /* ---------- משחק ----------
@@ -187,5 +188,6 @@
         '<div><div class="r-place">מקום ' + d.rank + (d.players ? ' <small style="font-size:.5em;opacity:.8">מתוך ' + d.players + '</small>' : '') + '</div>' +
         '<div class="r-score">' + A.fmt(d.score) + ' נקודות</div></div></div>'
       : '') +
+    '<button class="btn btn-primary btn-lg new-game-btn" type="button" data-action="leave-done">למשחק חדש</button>' +
     '</section>';
 })(window.App);
