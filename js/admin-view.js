@@ -39,7 +39,7 @@
      d = { source:'builtin'|'file', duration, track, playing, showRank,
            saved:{title,count,updated}|null, preview:{fileName,rows:[...]}|null } */
   /* ---------- מסך ראשי ---------- */
-  V.home = () =>
+  V.home = (d) => (d = d || {}, 
     '<section class="home">' +
     '<div class="home-hero">' +
     '<h1 class="home-title">' + A.logo('logo-xl', true) + '</h1>' +
@@ -52,7 +52,7 @@
     [['פרשת השבוע', 'חנוכה', 'הלכות שבת', 'לוח הכפל', 'משניות', 'ארץ ישראל', 'ברכות', 'חזרה למבחן'],
       ['חגים ומועדים', 'נביאים', 'גדולי ישראל', 'מגילת אסתר', 'דקדוק', 'חשבון', 'בעלי חיים', 'מסיבת סיום']
     ].map((row, k) => { const t = row.map((w) => '<span>' + w + '</span>').join(''); return '<div class="tape tape-' + (k ? 'b' : 'a') + '"><div class="tape-row">' + t + t + '</div></div>'; }).join('') +
-    '</div></section>';
+    '</div></section>');
 
   /* ---------- מנוי ---------- */
   V.fmtDate = (ms) => { const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
