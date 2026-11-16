@@ -46,6 +46,10 @@
       '▫️ סיסמה: ' + M + x.pass + M,
       '▫️ בתוקף עד: *' + fmt(x.expires) + '*',
       '',
+      '🔒 *פרטי הכניסה אישיים*',
+      'המנוי מיועד לשימוש של ' + x.name + ' בלבד. אין להעביר את פרטי הכניסה לאנשים או למוסדות אחרים.',
+      'מכירים עוד מישהו שירצה ליהנות מ-Clikeff? נשמח לעזור לו לפתוח מנוי משלו.',
+      '',
       L,
       '',
       '🎯 *איך מתחילים?*',
@@ -101,6 +105,13 @@
       'מייל: <b>' + esc(x.email) + '</b><br>' +
       'סיסמה: <span style="display:inline-block;font-family:\'Courier New\',Courier,monospace;font-size:18px;font-weight:bold;color:' + C.navy + ';background:#ffffff;border:1px dashed #9fb3cf;border-radius:8px;padding:0 10px;direction:ltr">' + esc(x.pass) + '</span><br>' +
       'בתוקף עד: <b>' + fmt(x.expires) + '</b>' +
+      '</td></tr></table></td></tr>' +
+      /* שימוש אישי */
+      '<tr><td style="padding:6px 30px 8px">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fff3f3;border:1px solid #ffd3d4;border-radius:12px"><tr><td style="padding:12px 16px;' + F + 'font-size:14px;line-height:1.7;color:' + C.text + '">' +
+      '<b style="color:#c4373b">🔒 פרטי הכניסה אישיים</b><br>' +
+      'המנוי מיועד לשימוש של <b>' + esc(x.name) + '</b> בלבד. אין להעביר את פרטי הכניסה לאנשים או למוסדות אחרים.<br>' +
+      'מכירים עוד מישהו שירצה ליהנות מ-Clikeff? נשמח לעזור לו לפתוח מנוי משלו.' +
       '</td></tr></table></td></tr>' +
       /* כפתור */
       '<tr><td align="center" style="padding:14px 30px 22px">' +
