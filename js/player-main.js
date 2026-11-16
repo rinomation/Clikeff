@@ -30,11 +30,14 @@
 
   function watch(code) {
     if (M.unsub) M.unsub();
-    /* בהמתנה בודקים כל 2 שניות (התחלה מהירה); במשחק ובסיום כל 5 (איפוס/סגירה/דירוג) */
+    /* קצב בדיקה חסכוני שלא מאט את המשחק:
+       בלובי כל 3 שניות, וכשהמנחה לוחץ "התחל" (בזמן הספירה לאחור) עוברים לבדיקה מהירה מאוד. */
     M.unsub = A.Net.watchRoom(code, onRoom, () => {
-      const r = M.room, g = A.Game.state();
-      if (!r || r.status !== 'active') return 2000;
-      if (r.mode === 'sync') return 1500;
+      const r = M.room;
+      if (!r) return 2000;
+      if (r.status === 'waiting') return Date.now() < (M.fastUntil || 0) ? 700 : 3000;
+      if (r.status !== 'active') return 5000;
+      if (r.mode === 'sync') return A.SyncPlayer.pollMs();
       return 5000;
     });
   }
@@ -70,6 +73,18 @@
 
     if (room.status === 'waiting') {
       A.Sound.stopMusic();
+      /* המנחה לחץ "התחל משחק": ספירה לאחור של 3 שניות לפני השאלה הראשונה */
+      const sAt = room.startingAt && room.startingAt.ms;
+      if (sAt && sAt !== M.lastStarting) {
+        const first = M.lastStarting === undefined;
+        M.lastStarting = sAt;
+        if (!first || (room.updatedAt && room.updatedAt.ms === sAt)) {
+          M.fastUntil = Date.now() + 15000;
+          P.render('waiting', Object.assign({}, M.session, { team: P.data.team || null, message: 'מתחילים! הסתכלו על המסך הגדול' }));
+          return;
+        }
+      } else if (!sAt) M.lastStarting = null;
+      if (P.data && P.data.message && Date.now() < (M.fastUntil || 0)) return;
       const tIdx = room.teamCount ? (room.teams || {})[A.Net.uid()] : null;
       const team = tIdx != null ? A.Teams.get(tIdx, room) : null;
       if (P.screen !== 'waiting' || ((P.data.team || {}).name || null) !== ((team || {}).name || null)) P.render('waiting', Object.assign({}, M.session, { team }));

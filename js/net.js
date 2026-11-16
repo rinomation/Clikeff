@@ -148,30 +148,36 @@
 
   /** מעקב אחרי מסמך החדר. rate() מחזיר כל כמה מילישניות לבדוק */
   N.watchRoom = (code, cb, rate) => {
-    let alive = true, last = null, t = null;
+    let alive = true, last = null, t = null, busy = false;
+    /* בדיקה אחת בכל רגע, כדי שתשובה ישנה מהשרת לא תגיע אחרי חדשה */
     const run = async () => {
-      if (!alive) return;
-      if (!document.hidden) {
-        try {
+      if (!alive || busy) return;
+      busy = true;
+      try {
+        if (!document.hidden) {
           const room = await N.getRoom(code);
           const sig = JSON.stringify(room);
           if (alive && sig !== last) { last = sig; cb(room); }
-        } catch (e) { /* תקלה זמנית — ננסה שוב */ }
-      }
-      if (alive) t = setTimeout(run, rate ? rate() : 2500);
+        }
+      } catch (e) { /* תקלה זמנית — ננסה שוב */ }
+      busy = false;
+      if (alive) { clearTimeout(t); t = setTimeout(run, rate ? rate() : 2500); }
     };
+    /* מסך שחזר להיות גלוי (טאבלט שהתעורר): בודקים מיד, בלי לחכות לתור */
+    const onVis = () => { if (alive && !document.hidden && !busy) { clearTimeout(t); run(); } };
+    document.addEventListener('visibilitychange', onVis);
     run();
-    return () => { alive = false; clearTimeout(t); };
+    return () => { alive = false; clearTimeout(t); document.removeEventListener('visibilitychange', onVis); };
   };
 
-  /** מעקב אחרי המשתתפים: רק מה שהשתנה מאז הבדיקה הקודמת, ורענון מלא כל 30 שניות */
+  /** מעקב אחרי המשתתפים: רק מה שהשתנה מאז הבדיקה הקודמת, ורענון מלא כל 60 שניות */
   N.watchPlayers = (code, cb) => {
     let alive = true, t = null, since = 0, fullAt = 0;
     const map = new Map();
     const run = async () => {
       if (!alive) return;
       try {
-        const full = Date.now() - fullAt > 30000;
+        const full = Date.now() - fullAt > 60000;
         const rows = await R.query(roomP(code), 'players', full ? 0 : since);
         if (full) { map.clear(); fullAt = Date.now(); }
         rows.forEach((p) => {

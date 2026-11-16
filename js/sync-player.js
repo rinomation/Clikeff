@@ -18,6 +18,8 @@
     const fresh = !Z.room || Z.room.version !== room.version || Z.code !== code;
     Z.room = room; Z.code = code;
     if (fresh) load();
+    const pk = room.phase + ':' + (room.qIndex || 0);
+    if (pk !== Z.phaseKey) { Z.phaseKey = pk; Z.phaseAt = Date.now(); }
     A.Sound.stopMusic(); /* המוזיקה מתנגנת במסך של המנחה */
     const i = room.qIndex || 0;
 
@@ -130,6 +132,20 @@
     A.Sound.fanfare();
     if (window.confetti) window.confetti({ particleCount: 140, spread: 80, origin: { y: 0.3 } });
   }
+
+  /** כל כמה זמן לבדוק את השרת (מילישניות) */
+  Z.pollMs = () => {
+    const r = Z.room;
+    if (!r) return 1500;
+    const i = r.qIndex || 0, since = Date.now() - (Z.phaseAt || 0);
+    if (r.phase === 'question') return Z.st && Z.st.ans[i] != null ? 2000 : 1500; /* ענה כבר: מחכה רק לתוצאות */
+    if (r.phase === 'reveal' || r.phase === 'board') {
+      if (r.advance === 'manual') return 1500;      /* המנחה יכול לעבור בכל רגע */
+      return since < 4000 ? 2500 : 900;              /* מעבר אוטומטי אחרי 8 שניות: מהר רק לקראתו */
+    }
+    if (r.phase === 'end') return 8000;
+    return 1500;
+  };
 
   Z.reset = () => { stopLoop(); Z.room = null; Z.st = null; };
 })(window.App);

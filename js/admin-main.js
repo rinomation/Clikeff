@@ -274,6 +274,8 @@
   let counting = false;
   H.start = () => {
     if (counting) return;
+    /* הילדים יעברו לבדיקה מהירה, כדי לקבל את השאלה הראשונה מיד */
+    if (S.code) A.Net.updateRoom(S.code, { startingAt: A.FsRest.NOW }).catch(() => {});
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return go();
     counting = true;
     const ov = document.createElement('div');
@@ -288,7 +290,7 @@
   };
 
   H.reset = () => {
-    const patch = { status: 'waiting', startedAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null };
+    const patch = { status: 'waiting', startedAt: null, startingAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null };
     if (S.room && S.room.source !== 'file') { patch.questions = A.pickBank(10); patch.qCount = 10; }
     A.Net.bumpRoom(S.code, patch)
       .then(() => A.toast('הסבב אופס, כולם חזרו להמתנה', { img: 'hourglass_not_done' }))
