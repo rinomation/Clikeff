@@ -17,7 +17,8 @@
       preview: S.preview,
       editor: S.editor || null,
       tab: S.tab || 'questions',
-      saved: S.bank ? { title: S.bank.title, count: S.bank.items.length, updated: S.bank.updated } : null
+      saved: S.bank ? { title: S.bank.title, count: S.bank.items.length, updated: S.bank.updated } : null,
+      roomCode: S.inSettings ? S.code : null
     });
   }
   S.showSetup = () => { S.view = 'setup'; M.render('setup', setupData()); };
@@ -226,6 +227,7 @@
 
   function attach(code) {
     S.code = code;
+    S.started = false;
     detach(true);
     S.unsubRoom = A.Net.watchRoom(code, (room) => {
       if (!room || room.status === 'closed') { S.room = null; return backToSetup(); }
@@ -234,7 +236,7 @@
       if (Y.lastCommit && room.updatedAt && room.updatedAt.ms < Y.lastCommit) return;
       const was = S.room;
       S.room = room;
-      if (room.status === 'waiting') S.view = 'lobby';
+      if (room.status === 'waiting') { if (!S.inSettings) S.view = 'lobby'; }
       else if (room.mode === 'sync') {
         if (room.phase === 'end' && (!was || was.phase !== 'end')) { if (was) H.results(); else S.view = 'results'; }
         else if (room.phase !== 'end' && (S.view === 'lobby' || S.view === 'setup' || !was)) S.view = 'sync';
@@ -266,6 +268,8 @@
     if (!keepCode) { S.code = null; S.players = []; }
   }
   function backToSetup() {
+    A.Sound.stopMusic();
+    S.inSettings = false;
     S.teamMap = null;
     detach(false);
     A.store.del('hostRoom');
@@ -284,7 +288,9 @@
     const ov = document.createElement('div');
     ov.className = 'countdown'; ov.setAttribute('aria-live', 'assertive');
     document.body.appendChild(ov);
-    const steps = ['3', '2', '1', 'יאללה!'];
+    S.started = true;
+    A.Sound.stopMusic();
+    const steps = ['3', '2', '1', 'קדימה!'];
     steps.forEach((t, k) => setTimeout(() => {
       ov.innerHTML = '<i></i><b class="' + (k === 3 ? 'go' : '') + '">' + t + '</b>';
       if (k < 3) A.Sound.beep(k === 2); else A.Sound.pop();
@@ -292,7 +298,40 @@
     setTimeout(() => { ov.classList.add('out'); setTimeout(() => ov.remove(), 350); counting = false; go(); }, steps.length * 900);
   };
 
+  H['to-settings'] = async () => {
+    if (!S.code || !S.room) return;
+    if (S.room.status === 'active' && !confirm('לעצור את המשחק ולחזור להגדרות?\nהמשתתפים יחכו בלובי עם אותו קוד, ולא יצטרכו להיכנס מחדש.')) return;
+    A.Sound.stopMusic();
+    S.inSettings = true;
+    if (S.room.status !== 'waiting') {
+      try { await A.Net.bumpRoom(S.code, { status: 'waiting', startedAt: null, startingAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null }); }
+      catch (e) { S.inSettings = false; return A.toast(A.Net.errorText(e), { type: 'bad' }); }
+    }
+    S.tab = 'settings'; S.showSetup(); window.scrollTo(0, 0);
+  };
+  H['apply-room'] = async (v, btn) => {
+    if (!S.code) return;
+    if (S.cfg.source === 'file' && !(S.bank && S.bank.items.length)) {
+      return A.toast('עוד לא נשמרו שאלות מקובץ. העלו קובץ או בחרו במאגר המובנה.', { type: 'bad', ms: 5000 });
+    }
+    if (btn) btn.disabled = true;
+    try {
+      const questions = buildQuestions();
+      await A.Net.bumpRoom(S.code, {
+        status: 'waiting', phase: null, qIndex: 0, qStarts: [], reveal: null, ranks: {}, rankCount: 0, startingAt: null,
+        duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto',
+        showQ: !!S.cfg.showQ, early: !!S.cfg.early, teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {},
+        teamSet: S.cfg.teamSet || A.Teams.DEFAULT, teamNames: A.Teams.names(S.cfg), boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
+        questions, qCount: questions.length, source: S.cfg.source
+      });
+      S.teamMap = null; S.inSettings = false; S.started = false; S.view = 'lobby';
+      A.toast('ההגדרות נשמרו. כולם בלובי ומחכים.', { type: 'ok' });
+      draw();
+    } catch (e) { if (btn) btn.disabled = false; A.toast(A.Net.errorText(e), { type: 'bad' }); }
+  };
+
   H.reset = () => {
+    S.started = false;
     const patch = { status: 'waiting', startedAt: null, startingAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null };
     if (S.room && S.room.source !== 'file') { patch.questions = A.pickBank(10); patch.qCount = 10; }
     A.Net.bumpRoom(S.code, patch)
@@ -441,9 +480,11 @@
     requestAnimationFrame(() => {
       drawQueued = false;
       if (!S.room) return;
+      if (S.inSettings || S.view === 'setup' || S.view === 'home') return; /* לא מחליפים את מסך ההגדרות */
       const list = players();
       const base = { code: S.code, players: list, total: (S.room.questions || []).length, teams: teamData(list), teamMap: teamMapNow() };
       if (S.view === 'lobby') {
+        if (!S.started) A.Sound.playMusic('drama'); /* מוזיקת אקשן בזמן ההמתנה, עד שלוחצים התחל */
         M.render('lobby', Object.assign(base, { qCount: base.total, duration: S.room.duration, track: S.room.track, hostName: S.room.hostName || '' }));
       } else if (S.view === 'results') {
         /* מציירים מחדש רק כשהתוצאות עצמן השתנו, כדי שהפודיום לא יתחיל מההתחלה */

@@ -42,7 +42,7 @@
       '</div></fieldset>' +
       '<p class="form-error" id="join-error" role="alert">' + (d.error ? A.icon('alert') + esc(d.error) : '') + '</p>' +
       '<button class="btn btn-accent btn-lg btn-block" type="submit"' + (d.busy ? ' disabled' : '') + '>' +
-      (d.busy ? '<span class="spinner"></span> מתחברים…' : 'יאללה, מצטרפים!') + '</button>' +
+      (d.busy ? '<span class="spinner"></span> מתחברים…' : 'קדימה, מצטרפים!') + '</button>' +
       '</form>' +
       '<p class="join-foot">רק שם וקוד. בלי הרשמה ובלי מייל.</p>' +
       '</section>'

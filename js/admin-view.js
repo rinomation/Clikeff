@@ -194,7 +194,9 @@
       '</div>' +
       '<div class="launch-bar">' +
       '<div class="lb-meta" id="setup-summary"><span class="lb-title">סיכום:</span>' + V.summary(d) + '</div>' +
-      '<button class="btn btn-accent btn-lg" type="button" data-action="open-room">' + A.icon('sparkle') + 'פתיחת המשחק</button>' +
+      (d.roomCode
+        ? '<button class="btn btn-accent btn-lg" type="button" data-action="apply-room">' + A.icon('check') + 'שמירה וחזרה ללובי</button>'
+        : '<button class="btn btn-accent btn-lg" type="button" data-action="open-room">' + A.icon('sparkle') + 'פתיחת המשחק</button>') +
       '</div>' +
       '</section>'
     );
@@ -405,6 +407,7 @@
       '<button class="btn btn-accent btn-xl" type="button" data-action="start"' + (d.players.length ? '' : ' disabled') + '>' +
       A.icon('play') + 'התחל משחק</button>' +
       '<div class="secondary">' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-action="to-settings">' + A.icon('edit') + 'הגדרות</button>' +
       '<button class="btn btn-ghost btn-sm" type="button" data-action="close-room">' + A.icon('door') + 'סגירת חדר</button>' +
       '</div></div>' +
       '<div class="card players-panel">' +
@@ -445,6 +448,7 @@
       '<button class="btn btn-primary" type="button" data-action="results">' + A.icon('trophy') + 'הצגת פודיום</button>' +
       '<button class="btn btn-ghost" type="button" data-action="export">' + A.icon('download') + 'ייצוא לאקסל</button>' +
       '<button class="btn btn-ghost" type="button" data-action="reset">' + A.icon('reset') + 'איפוס לסבב נוסף</button>' +
+      '<button class="btn btn-ghost" type="button" data-action="to-settings">' + A.icon('edit') + 'הגדרות</button>' +
       '<button class="btn btn-ghost" type="button" data-action="close-room">' + A.icon('door') + 'סגירת חדר</button>' +
       '</div></div>' +
       '<div class="stats-row">' +
@@ -482,6 +486,7 @@
     (d.paused ? 'המשך אוטומטי' : 'עצירה') + '</button>') +
     '<button class="btn btn-ghost btn-sm" type="button" data-action="sync-skip">' + A.icon('next') + 'הבא</button>' +
     '<button class="btn btn-ghost btn-sm" type="button" data-action="sync-table">' + A.icon('users') + 'טבלה</button>' +
+    '<button class="btn btn-ghost btn-sm" type="button" data-action="to-settings">' + A.icon('edit') + 'הגדרות</button>' +
     '<button class="btn btn-ghost btn-sm" type="button" data-action="close-room">' + A.icon('door') + 'סגירת חדר</button>' +
     '</div>';
 
