@@ -18,6 +18,13 @@
     const fresh = !Z.room || Z.room.version !== room.version || Z.code !== code;
     Z.room = room; Z.code = code;
     if (fresh) load();
+    /* השאלה הוצגה שוב אחרי הפסקה: מתחילים אותה מחדש */
+    if ((room.retry || 0) !== (Z.st.retry || 0)) {
+      const j = room.qIndex || 0;
+      delete Z.st.ans[j]; delete Z.st.seen[j]; delete Z.st.shown[j]; delete Z.st.res[j];
+      Z.st.retry = room.retry || 0; save(); Z.phaseKey = null;
+      if (P.screen === 'pad') P.screen = null;
+    }
     const pk = room.phase + ':' + (room.qIndex || 0);
     if (pk !== Z.phaseKey) { Z.phaseKey = pk; Z.phaseAt = Date.now(); }
     A.Sound.stopMusic(); /* המוזיקה מתנגנת במסך של המנחה */

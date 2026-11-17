@@ -87,7 +87,8 @@
       if (P.data && P.data.message && Date.now() < (M.fastUntil || 0)) return;
       const tIdx = room.teamCount ? (room.teams || {})[A.Net.uid()] : null;
       const team = tIdx != null ? A.Teams.get(tIdx, room) : null;
-      if (P.screen !== 'waiting' || ((P.data.team || {}).name || null) !== ((team || {}).name || null) || (P.data.hostName || '') !== (room.hostName || '')) P.render('waiting', Object.assign({}, M.session, { team, hostName: room.hostName || '' }));
+      const pauseMsg = room.resumeAt ? 'הפסקה קצרה. תכף ממשיכים מאותו מקום!' : null;
+      if (P.screen !== 'waiting' || ((P.data.team || {}).name || null) !== ((team || {}).name || null) || (P.data.hostName || '') !== (room.hostName || '') || (P.data.message || null) !== pauseMsg) P.render('waiting', Object.assign({}, M.session, { team, hostName: room.hostName || '', message: pauseMsg }));
       return;
     }
 

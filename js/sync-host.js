@@ -18,6 +18,7 @@
       const ans = p.answers && p.answers[String(i)];
       if (!ans || ans.c == null || !ans.at) return;
       const took = (ans.at.ms - qStartMs) / 1000;
+      if (took < -2) return; /* תשובה מלפני ההפסקה */
       if (took > dur + Y.GRACE_MS / 1000) return;   /* מאוחר מדי */
       if (counts[ans.c] != null) counts[ans.c]++;
       const ok = q.k !== 's' && ans.c === q.c;
@@ -64,16 +65,25 @@
     } finally { busy = false; }
   }
 
-  function startQuestion(i) {
+  function startQuestion(i, extra) {
     const room = ctx.room();
     const qStarts = (room.qStarts || []).slice();
     qStarts[i] = Math.round(serverNow());
     beeped = {};
     A.Sound.duck(false);
     A.Sound.playMusic(room.track);
-    return write({ status: 'active', mode: 'sync', phase: 'question', qIndex: i, qStarts, reveal: null });
+    return write(Object.assign({ status: 'active', mode: 'sync', phase: 'question', qIndex: i, qStarts, reveal: null }, extra || {}));
   }
 
+  /** המשך אחרי הפסקה להגדרות: שאלה שנקטעה מוצגת שוב, אחרת עוברים לבאה */
+  Y.resume = async (ra) => {
+    Y.paused = false;
+    const room = ctx.room(), n = room.questions.length;
+    if (ra.phase === 'question') return startQuestion(ra.i, { retry: (room.retry || 0) + 1 });
+    if (ra.i + 1 < n) return startQuestion(ra.i + 1);
+    A.Sound.stopMusic();
+    return write({ status: 'active', phase: 'end' });
+  };
   Y.start = async () => { Y.paused = false; await write({ updatedAt: A.FsRest.NOW }); await startQuestion(0); };
 
   /** תוצאות השאלה: תשובה נכונה, התפלגות, המהירים, ונקודות לכל ילד */
@@ -122,7 +132,8 @@
     ctx.players().forEach((p) => {
       if (p.version !== room.version || p.offline) return;
       total++;
-      if (p.answers && p.answers[String(room.qIndex)]) n++;
+      const a = p.answers && p.answers[String(room.qIndex)], qs = (room.qStarts || [])[room.qIndex];
+      if (a && !(a.at && a.at.ms && qs && a.at.ms < qs - 2000)) n++;
     });
     return { n, total };
   };

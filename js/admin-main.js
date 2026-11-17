@@ -18,7 +18,8 @@
       editor: S.editor || null,
       tab: S.tab || 'questions',
       saved: S.bank ? { title: S.bank.title, count: S.bank.items.length, updated: S.bank.updated } : null,
-      roomCode: S.inSettings ? S.code : null
+      roomCode: S.inSettings ? S.code : null,
+      resume: S.inSettings && S.room && S.room.resumeAt ? { q: Math.min((S.room.resumeAt.i || 0) + (S.room.resumeAt.phase === 'question' ? 1 : 2), (S.room.questions || []).length), total: (S.room.questions || []).length, sync: S.room.mode === 'sync' } : null
     });
   }
   /* מוזיקה קלילה במסך הפתיחה ובהכנה (לא בזמן ניגון דוגמה) */
@@ -302,11 +303,16 @@
 
   H['to-settings'] = async () => {
     if (!S.code || !S.room) return;
-    if (S.room.status === 'active' && !confirm('לעצור את המשחק ולחזור להגדרות?\nהמשתתפים יחכו בלובי עם אותו קוד, ולא יצטרכו להיכנס מחדש.')) return;
+    const live = S.room.status === 'active' && S.room.phase !== 'end';
+    if (live && !confirm('לעצור רגע ולחזור להגדרות?\nהמשתתפים יחכו, ואחר כך ממשיכים מאותו מקום עם אותן נקודות.')) return;
     A.Sound.stopMusic();
     S.inSettings = true;
-    if (S.room.status !== 'waiting') {
-      try { await A.Net.bumpRoom(S.code, { status: 'waiting', startedAt: null, startingAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null }); }
+    if (live) {
+      const pause = { status: 'waiting', startingAt: null, resumeAt: { i: S.room.qIndex || 0, phase: S.room.phase || 'question' } };
+      try { await A.Net.updateRoom(S.code, pause); S.room = Object.assign({}, S.room, pause); }
+      catch (e) { S.inSettings = false; return A.toast(A.Net.errorText(e), { type: 'bad' }); }
+    } else if (S.room.status !== 'waiting') {
+      try { await A.Net.bumpRoom(S.code, { status: 'waiting', startedAt: null, startingAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null, resumeAt: null }); }
       catch (e) { S.inSettings = false; return A.toast(A.Net.errorText(e), { type: 'bad' }); }
     }
     S.tab = 'settings'; S.showSetup(); window.scrollTo(0, 0);
@@ -320,7 +326,7 @@
     try {
       const questions = buildQuestions();
       await A.Net.bumpRoom(S.code, {
-        status: 'waiting', phase: null, qIndex: 0, qStarts: [], reveal: null, ranks: {}, rankCount: 0, startingAt: null,
+        status: 'waiting', phase: null, qIndex: 0, qStarts: [], reveal: null, ranks: {}, rankCount: 0, startingAt: null, resumeAt: null,
         duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, mode: S.cfg.mode || 'sync', advance: S.cfg.advance || 'auto',
         showQ: !!S.cfg.showQ, early: !!S.cfg.early, teamCount: S.cfg.mode === 'self' ? 0 : (S.cfg.teams || 0), teams: {},
         teamSet: S.cfg.teamSet || A.Teams.DEFAULT, teamNames: A.Teams.names(S.cfg), boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery,
@@ -332,9 +338,31 @@
     } catch (e) { if (btn) btn.disabled = false; A.toast(A.Net.errorText(e), { type: 'bad' }); }
   };
 
+  H['resume-room'] = async (v, btn) => {
+    if (!S.code || !S.room || !S.room.resumeAt) return;
+    if (btn) btn.disabled = true;
+    const ra = S.room.resumeAt;
+    /* הגדרות שאפשר לשנות באמצע: זמן, מוזיקה, תצוגה ומעברים. השאלות, הקבוצות ומצב המשחק נשארים */
+    const patch = { duration: S.cfg.duration, track: S.cfg.track, showRank: !!S.cfg.showRank, advance: S.cfg.advance || 'auto',
+      showQ: !!S.cfg.showQ, early: !!S.cfg.early, boardEvery: S.cfg.boardEvery == null ? 3 : S.cfg.boardEvery, resumeAt: null };
+    try {
+      if (S.room.mode === 'sync') {
+        await A.Net.updateRoom(S.code, patch);
+        S.room = Object.assign({}, S.room, patch);
+        S.inSettings = false; S.started = true; S.view = 'sync'; S.stageKey = null;
+        await A.SyncHost.resume(ra);
+      } else {
+        await A.Net.updateRoom(S.code, Object.assign(patch, { status: 'active' }));
+        S.inSettings = false; S.started = true; S.view = 'live';
+      }
+      A.toast('ממשיכים מאותו מקום!', { type: 'ok' });
+      draw();
+    } catch (e) { if (btn) btn.disabled = false; A.toast(A.Net.errorText(e), { type: 'bad' }); }
+  };
+
   H.reset = () => {
     S.started = false;
-    const patch = { status: 'waiting', startedAt: null, startingAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null };
+    const patch = { status: 'waiting', startedAt: null, startingAt: null, ranks: {}, rankCount: 0, phase: null, qIndex: 0, qStarts: [], reveal: null, resumeAt: null };
     if (S.room && S.room.source !== 'file') { patch.questions = A.pickBank(10); patch.qCount = 10; }
     A.Net.bumpRoom(S.code, patch)
       .then(() => A.toast('הסבב אופס, כולם חזרו להמתנה', { img: 'hourglass_not_done' }))

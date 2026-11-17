@@ -199,7 +199,12 @@
       '</div>' +
       '<div class="launch-bar">' +
       '<div class="lb-meta" id="setup-summary"><span class="lb-title">סיכום:</span>' + V.summary(d) + '</div>' +
-      (d.roomCode
+      (d.resume
+        ? '<div class="lb-resume">' +
+          '<button class="btn btn-accent btn-lg" type="button" data-action="resume-room">' + A.icon('play') + 'חזרה למשחק' + (d.resume.sync ? ' · שאלה ' + d.resume.q + ' מתוך ' + d.resume.total : '') + '</button>' +
+          '<button class="btn btn-ghost" type="button" data-action="apply-room">' + A.icon('reset') + 'התחלה מחדש</button>' +
+          '<small>בחזרה למשחק נשמרות הנקודות והשאלות. שינוי שאלות, קבוצות או מצב משחק נכנס רק בהתחלה מחדש.</small></div>'
+        : d.roomCode
         ? '<button class="btn btn-accent btn-lg" type="button" data-action="apply-room">' + A.icon('check') + 'שמירה וחזרה ללובי</button>'
         : '<button class="btn btn-accent btn-lg" type="button" data-action="open-room">' + A.icon('sparkle') + 'פתיחת המשחק</button>') +
       '</div>' +
