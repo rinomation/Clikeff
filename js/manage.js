@@ -10,6 +10,9 @@
   const st = { user: null, list: [], leads: [], leadsDenied: false, tab: 'clients', leadFilter: 'new', q: '', filter: 'all', open: null, edit: null, shown: {}, last: null, form: {}, mode: 'signin', mail: false };
 
   const fmt = (ms) => { if (!ms) return '—'; const d = new Date(ms); return d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear(); };
+  const fmtT = (ms) => { const d = new Date(ms); return fmt(ms) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  const isTrial = (l) => !!l.trial && l.active !== false && expMs(l) > Date.now();
+  const untilOf = (l) => (l.trial ? fmtT(expMs(l)) : fmt(expMs(l)));
   const daysLeft = (ms) => Math.ceil((ms - Date.now()) / 864e5);
   const tms = (t) => (t && t.toMillis ? t.toMillis() : 0);
   const expMs = (l) => tms(l.expires);
@@ -24,7 +27,8 @@
   function statusOf(l) {
     const days = daysLeft(expMs(l));
     if (l.active === false) return { k: 'stop', t: 'מושהה' };
-    if (days <= 0) return { k: 'end', t: 'הסתיים' };
+    if (days <= 0) return { k: 'end', t: l.trial ? 'הניסיון הסתיים' : 'הסתיים' };
+    if (isTrial(l)) return { k: 'soon', t: 'ניסיון · עוד ' + Math.max(1, Math.ceil((expMs(l) - Date.now()) / 36e5)) + ' שעות' };
     if (days <= 30) return { k: 'soon', t: 'עוד ' + days + ' ימים' };
     return { k: 'ok', t: 'פעיל' };
   }
@@ -286,7 +290,7 @@
       '<button class="m-row-head" type="button" data-action="open" data-value="' + esc(l.id) + '" aria-expanded="' + open + '">' +
       '<span class="m-av" style="--c:' + colorOf(l.name || l.email) + '">' + esc(initial(l)) + '</span>' +
       '<span class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><small dir="ltr">' + esc(l.email || '') + '</small></span>' +
-      '<span class="m-when"><span class="m-badge ' + s.k + '">' + s.t + '</span><small>עד ' + fmt(expMs(l)) + '</small></span>' +
+      '<span class="m-when"><span class="m-badge ' + s.k + '">' + s.t + '</span><small>עד ' + untilOf(l) + '</small></span>' +
       '<span class="m-chev">' + A.icon('next') + '</span>' +
       '</button>' +
       (open ? '<div class="m-detail">' +
@@ -305,11 +309,12 @@
                 (st.shown[l.id] ? '<button class="link-btn" type="button" data-action="copy-pass" data-value="' + esc(l.id) + '">העתקה</button>' : '')
               : '<span class="m-muted">לא שמורה</span>') + '</dd></div>' +
             '<div><dt>נפתח ב-</dt><dd>' + fmt(tms(l.createdAt)) + '</dd></div>' +
-            '<div><dt>בתוקף עד</dt><dd>' + fmt(expMs(l)) + '</dd></div>' +
+            '<div><dt>בתוקף עד</dt><dd>' + untilOf(l) + '</dd></div>' +
             '<div><dt>מצב</dt><dd><span class="m-badge ' + s.k + '">' + s.t + '</span></dd></div>' +
             '</dl>' +
             '<div class="m-acts">' +
-            '<button class="btn btn-primary btn-sm" type="button" data-action="renew" data-value="' + esc(l.id) + '">' + ic('reset') + 'חידוש לשנה</button>' +
+            '<button class="btn btn-primary btn-sm" type="button" data-action="renew" data-value="' + esc(l.id) + '">' + ic('reset') + (l.trial ? 'מנוי שנתי מלא' : 'חידוש לשנה') + '</button>' +
+            (isTrial(l) ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-action="trial" data-value="' + esc(l.id) + '">' + ic('clock') + 'ניסיון 24 שעות</button>') +
             (l.pass ? '<button class="btn btn-ghost btn-sm" type="button" data-action="resend" data-value="' + esc(l.id) + '">' + ic('copy') + 'נוסח להעתקה</button>' : '') +
             '<button class="btn btn-ghost btn-sm" type="button" data-action="edit" data-value="' + esc(l.id) + '">' + ic('edit') + 'עריכה</button>' +
             '<button class="btn btn-ghost btn-sm" type="button" data-action="reset" data-value="' + esc(l.id) + '">' + ic('mail') + 'מייל לסיסמה חדשה</button>' +
@@ -548,8 +553,14 @@
   const find = (id) => st.list.find((x) => x.id === id);
   async function renew(id) {
     const l = find(id); if (!l) return;
-    const d = new Date(Math.max(Date.now(), expMs(l))); d.setFullYear(d.getFullYear() + 1);
-    return patch(id, { expires: DEMO ? { toMillis: () => d.getTime() } : d, active: true }, 'המנוי של ' + (l.name || l.email) + ' חודש עד ' + fmt(d.getTime()));
+    const d = new Date(l.trial ? Date.now() : Math.max(Date.now(), expMs(l))); d.setFullYear(d.getFullYear() + 1);
+    return patch(id, { expires: DEMO ? { toMillis: () => d.getTime() } : d, active: true, trial: false }, 'המנוי של ' + (l.name || l.email) + ' חודש עד ' + fmt(d.getTime()));
+  }
+  async function trial(id) {
+    const l = find(id); if (!l) return;
+    if (!confirm('להפוך את המנוי של ' + (l.name || l.email) + ' לניסיון של 24 שעות מעכשיו?\nאחרי 24 שעות הם לא יוכלו לפתוח משחקים, עד שתלחצי "מנוי שנתי מלא".')) return;
+    const d = new Date(Date.now() + 24 * 3600 * 1000);
+    return patch(id, { expires: DEMO ? { toMillis: () => d.getTime() } : d, active: true, trial: true }, 'ניסיון של 24 שעות, עד ' + fmtT(d.getTime()));
   }
   async function toggle(id) {
     const l = find(id); if (!l) return;
@@ -623,6 +634,7 @@
       case 'cancel-edit': st.edit = null; return viewDash();
       case 'save-edit': return saveEdit(v);
       case 'renew': return renew(v);
+      case 'trial': return trial(v);
       case 'toggle': return toggle(v);
       case 'reset': return resetPw(v);
     }

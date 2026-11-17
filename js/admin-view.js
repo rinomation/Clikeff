@@ -64,6 +64,11 @@
     if (d.owner) return '<p class="lic-line">' + A.icon('check') + 'מנהלת המערכת · <a href="manage.html">לניהול המנויים</a></p>';
     if (!d.license || !d.license.expires) return '';
     const ms = d.license.expires.toMillis(), days = Math.ceil((ms - Date.now()) / 864e5);
+    if (d.license.trial) {
+      const t = new Date(ms), hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+      return '<p class="lic-line is-soon">' + A.icon('alert') + 'תקופת ניסיון, עד <b>' + V.fmtDate(ms) + ' בשעה ' + hh + '</b>' +
+        ' · <button class="link-btn" type="button" data-action="change-pass">החלפת סיסמה</button></p>';
+    }
     return '<p class="lic-line' + (days <= 30 ? ' is-soon' : '') + '">' + A.icon(days <= 30 ? 'alert' : 'check') +
       (days <= 30 ? 'המנוי מסתיים בעוד <b>' + days + '</b> ימים (' + V.fmtDate(ms) + ')' : 'המנוי בתוקף עד <b>' + V.fmtDate(ms) + '</b>') +
       ' · <button class="link-btn" type="button" data-action="change-pass">החלפת סיסמה</button></p>';
@@ -126,8 +131,8 @@
     return '<section class="auth">' +
       '<div class="card auth-card no-lic">' +
       '<img src="' + A.img('hourglass_done') + '" alt="">' +
-      '<h2>' + (ended ? 'המנוי הסתיים' : 'המנוי לא פעיל') + '</h2>' +
-      '<p>' + (ended ? 'המנוי השנתי שלכם הסתיים ב-' + V.fmtDate(lic.expires.toMillis()) + '. כדי להמשיך לשחק, חדשו את המנוי.'
+      '<h2>' + (ended ? (lic.trial ? 'תקופת הניסיון הסתיימה' : 'המנוי הסתיים') : 'המנוי לא פעיל') + '</h2>' +
+      '<p>' + (ended && lic.trial ? 'תודה שניסיתם את Clikeff! כדי להמשיך לשחק, פתחו מנוי שנתי.' : ended ? 'המנוי השנתי שלכם הסתיים ב-' + V.fmtDate(lic.expires.toMillis()) + '. כדי להמשיך לשחק, חדשו את המנוי.'
         : lic ? 'המנוי של החשבון הזה הושהה. לפרטים צרו קשר.' : 'לחשבון ' + esc(d.email || '') + ' עדיין אין מנוי פעיל.') + '</p>' +
       '<div class="lic-contact">' +
       '<a class="btn btn-accent" href="https://wa.me/972542203441" target="_blank" rel="noopener">וואטסאפ 054-220-3441</a>' +
