@@ -36,6 +36,22 @@
   /** הודעת ברוכים הבאים למוסד, בעיצוב של וואטסאפ: *מודגש*, _נטוי_, ```גופן קבוע``` */
   function message(x) {
     const L = '━━━━━━━━━━━━━━━', M = '```';
+    if (x.trial) return [
+      '⏳ *24 שעות של Clikeff, עלינו!*',
+      '',
+      'שלום *' + x.name + '* 👋',
+      'פתחנו לכם חשבון ניסיון, כדי שתרגישו את המשחק בעצמכם.',
+      '',
+      '▫️ קישור: ' + GAME_URL,
+      '▫️ מייל: ' + x.email,
+      '▫️ סיסמה: ' + M + x.pass + M,
+      '▫️ פעיל עד: *' + fmtT(x.expires) + '*',
+      '',
+      'אהבתם? נשמח לפתוח לכם מנוי שנתי מלא 🎉',
+      '📞 050-410-3847',
+      '',
+      '_לוחצים, נהנים, משחקים!_ 🎈'
+    ].join('\n');
     return [
       '✨' + L + '✨',
       '🎉 *ברוכים הבאים ל-Clikeff!*',
@@ -86,6 +102,7 @@
   function emailHtml(x) {
     const C = { navy: '#06142b', text: '#1d2b45', mute: '#5b6b85', box: '#f2f6fb', line: '#e3e9f2', coral: '#ff5a5f' };
     const F = "font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;";
+    if (x.trial) return trialHtml(x, C, F);
     const step = (n, color, title, sub) =>
       '<tr><td style="padding:8px 0 8px 12px;vertical-align:top;width:40px">' +
       '<div style="width:34px;height:34px;line-height:34px;border-radius:50%;background:' + color + ';color:#ffffff;' + F + 'font-size:17px;font-weight:bold;text-align:center">' + n + '</div></td>' +
@@ -145,8 +162,46 @@
       '<div style="' + F + 'font-size:12px;color:#94a3b8;margin-top:14px">Clikeff · לוחצים, נהנים, משחקים!</div>' +
       '</td></tr></table>';
   }
+  /** מייל ניסיון: קצר, בצבעי זהב, עם "שעון" של 24 שעות */
+  function trialHtml(x, C, F) {
+    const G = '#ffb020';
+    return '' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f7;direction:rtl"><tr><td align="center" style="padding:24px 12px">' +
+      '<table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:520px;background:#ffffff;border-radius:18px;overflow:hidden;direction:rtl;text-align:right;border-top:6px solid ' + G + '">' +
+      /* לוגו על רקע כהה + תג ניסיון */
+      '<tr><td align="center" style="background:' + C.navy + ';padding:24px 24px 20px">' +
+      '<img src="' + LOGO + '" width="180" alt="Clikeff" style="display:block;width:180px;max-width:60%;height:auto;border:0;margin:0 auto;color:#ffffff;' + F + 'font-size:28px;font-weight:bold">' +
+      '<div style="display:inline-block;margin-top:12px;padding:6px 18px;border-radius:999px;background:' + G + ';' + F + 'font-size:15px;font-weight:bold;color:' + C.navy + '">⏳ 24 שעות של התנסות</div>' +
+      '</td></tr>' +
+      /* ברכה קצרה */
+      '<tr><td align="center" style="padding:26px 28px 6px;' + F + 'font-size:16px;line-height:1.7;color:' + C.text + '">' +
+      '<div style="' + F + 'font-size:23px;font-weight:bold;color:' + C.navy + ';margin-bottom:6px">שלום ' + esc(x.name) + '! 👋</div>' +
+      'פתחנו לכם חשבון ניסיון, כדי שתרגישו את המשחק בעצמכם.</td></tr>' +
+      /* פרטים */
+      '<tr><td style="padding:14px 28px 6px">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fff8e8;border:1px dashed ' + G + ';border-radius:14px"><tr><td style="padding:16px 20px;' + F + 'font-size:15px;line-height:2;color:' + C.text + '">' +
+      'מייל: <b>' + esc(x.email) + '</b><br>' +
+      'סיסמה: <span style="display:inline-block;font-family:\'Courier New\',Courier,monospace;font-size:18px;font-weight:bold;color:' + C.navy + ';background:#ffffff;border:1px solid #f1d49a;border-radius:8px;padding:0 10px;direction:ltr">' + esc(x.pass) + '</span><br>' +
+      'פעיל עד: <b style="color:#b26b00">' + fmtT(x.expires) + '</b>' +
+      '</td></tr></table></td></tr>' +
+      /* כפתור */
+      '<tr><td align="center" style="padding:18px 28px 8px">' +
+      '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:' + C.coral + ';border-radius:999px">' +
+      '<a href="' + GAME_URL + '" style="display:inline-block;padding:13px 34px;' + F + 'font-size:17px;font-weight:bold;color:#ffffff;text-decoration:none">בואו ננסה!</a>' +
+      '</td></tr></table></td></tr>' +
+      '<tr><td align="center" style="padding:6px 28px 24px;' + F + 'font-size:15px;line-height:1.7;color:' + C.mute + '">' +
+      'אהבתם? נשמח לפתוח לכם מנוי שנתי מלא 🎉</td></tr>' +
+      /* תחתית */
+      '<tr><td align="center" style="background:' + C.box + ';border-top:1px solid ' + C.line + ';padding:16px 24px;' + F + 'font-size:14px;line-height:1.8;color:' + C.mute + '">' +
+      '<a href="tel:+972504103847" style="color:' + C.text + ';text-decoration:none">050-410-3847</a> &nbsp;|&nbsp; ' +
+      '<a href="mailto:rinatya3847@gmail.com" style="color:' + C.text + ';text-decoration:none">rinatya3847@gmail.com</a></td></tr>' +
+      '</table>' +
+      '<div style="' + F + 'font-size:12px;color:#94a3b8;margin-top:14px">Clikeff · לוחצים, נהנים, משחקים!</div>' +
+      '</td></tr></table>';
+  }
   const emailDoc = (x) => '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#eef2f7">' + emailHtml(x) + '</body></html>';
-  const MAIL_SUBJECT = 'המנוי שלכם ל-Clikeff מוכן! 🎉';
+  const MAIL_SUBJECT_FULL = 'המנוי שלכם ל-Clikeff מוכן! 🎉';
+  const subjectOf = (x) => (x.trial ? '24 שעות של Clikeff, עלינו! ⏳' : MAIL_SUBJECT_FULL);
 
   /** העתקה עם העיצוב (מדביקים במייל חדש ב-Gmail והעיצוב נשמר) */
   async function copyRich(html, text) {
@@ -172,11 +227,11 @@
     return '<div class="m-modal" role="dialog" aria-modal="true" aria-label="המייל ללקוח">' +
       '<div class="m-modal-box">' +
       '<div class="m-modal-head"><h3>המייל ל' + esc(x.name) + '</h3><button class="icon-btn" type="button" data-action="mail-close" aria-label="סגירה">' + A.icon('x') + '</button></div>' +
-      '<div class="m-mail-to"><span>אל: <b dir="ltr">' + esc(x.email) + '</b></span><span>נושא: <b>' + esc(MAIL_SUBJECT) + '</b></span></div>' +
+      '<div class="m-mail-to"><span>אל: <b dir="ltr">' + esc(x.email) + '</b></span><span>נושא: <b>' + esc(subjectOf(x)) + '</b></span></div>' +
       '<iframe class="m-mail-frame" title="תצוגת המייל" srcdoc="' + esc(emailDoc(x).split(LOGO).join(location.origin + '/assets/email-logo.png')) + '"></iframe>' +
       '<div class="m-modal-acts">' +
       '<button class="btn btn-accent btn-lg" type="button" data-action="mail-copy">' + ic('copy') + 'העתקת המייל המעוצב</button>' +
-      '<a class="btn btn-ghost btn-lg" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent(MAIL_SUBJECT) + '">' + ic('mail') + 'פתיחת מייל חדש ללקוח</a>' +
+      '<a class="btn btn-ghost btn-lg" href="mailto:' + esc(x.email) + '?subject=' + encodeURIComponent(subjectOf(x)) + '">' + ic('mail') + 'פתיחת מייל חדש ללקוח</a>' +
       '</div>' +
       '<p class="m-hint">מעתיקים, פותחים מייל חדש, ומדביקים בגוף המייל (Ctrl+V). העיצוב נשמר.</p>' +
       '</div></div>';
@@ -560,7 +615,8 @@
     const l = find(id); if (!l) return;
     if (!confirm('להפוך את המנוי של ' + (l.name || l.email) + ' לניסיון של 24 שעות מעכשיו?\nאחרי 24 שעות הם לא יוכלו לפתוח משחקים, עד שתלחצי "מנוי שנתי מלא".')) return;
     const d = new Date(Date.now() + 24 * 3600 * 1000);
-    return patch(id, { expires: DEMO ? { toMillis: () => d.getTime() } : d, active: true, trial: true }, 'ניסיון של 24 שעות, עד ' + fmtT(d.getTime()));
+    await patch(id, { expires: DEMO ? { toMillis: () => d.getTime() } : d, active: true, trial: true }, 'ניסיון של 24 שעות, עד ' + fmtT(d.getTime()));
+    if (l.pass) { st.last = { name: l.name || '', email: l.email, pass: l.pass, phone: l.phone, expires: d.getTime(), trial: true }; viewDash(); }
   }
   async function toggle(id) {
     const l = find(id); if (!l) return;
@@ -626,7 +682,7 @@
       case 'new-again': { st.mail = false; st.last = null; st.form = {}; viewDash(); const n = $('#n-name'); if (n) n.focus(); return; }
       case 'resend': {
         const l = find(v); if (!l) return;
-        st.last = { name: l.name || '', email: l.email, pass: l.pass, phone: l.phone, expires: expMs(l) };
+        st.last = { name: l.name || '', email: l.email, pass: l.pass, phone: l.phone, expires: expMs(l), trial: isTrial(l) };
         viewDash(); const side = $('.m-side'); if (side) side.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
