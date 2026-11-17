@@ -23,7 +23,7 @@
   /* ---------- כותרת ---------- */
   V.header = (d) =>
     '<header class="admin-top">' +
-    '<a class="admin-brand" href="admin.html">' + A.logo('logo-sm') +
+    '<a class="admin-brand" href="admin.html">' + A.logo('logo-sm', true) +
     '<h1><span class="sr-only">Clikeff</span><small>לוח המנחה</small></h1></a>' +
     '<span class="spacer"></span>' +
     (d.step == null ? '' : '<nav class="steps" aria-label="שלבי המשחק">' +

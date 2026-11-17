@@ -101,7 +101,8 @@ window.App = window.App || {};
   /* ---------- הלוגו (SVG). big=true: עם אנימציית "קליק" שחוזרת ---------- */
   A.logo = (cls, big) => {
     const L = [['C', 170], ['l', 290], ['ı', 349], ['k', 394], ['e', 486], ['f', 588], ['f', 659]];
-    return '<svg class="logo ' + (cls || '') + (big ? ' logo-anim' : '') + '" viewBox="140 0 620 290" role="img" aria-label="Clikeff">' +
+    const sy = big ? ' style="--sy:-' + ((Date.now() % 5500) / 1000).toFixed(2) + 's"' : '';
+    return '<svg class="logo ' + (cls || '') + (big ? ' logo-anim' : '') + '"' + sy + ' viewBox="140 0 620 290" role="img" aria-label="Clikeff">' +
       '<g class="lg-letters" font-family="Fredoka, Rubik, sans-serif" font-weight="700" font-size="190" fill="currentColor" direction="ltr">' +
       L.map((l, k) => '<text class="lt" x="' + l[1] + '" y="225" style="--k:' + k + '">' + l[0] + '</text>').join('') + '</g>' +
       (big ? '<g class="lg-sparks" stroke="#2ee6ff" stroke-width="6" stroke-linecap="round">' +

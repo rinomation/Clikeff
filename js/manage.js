@@ -240,7 +240,7 @@
   /* ---------- מסגרת ---------- */
   function header() {
     return '<header class="admin-top">' +
-      '<a class="admin-brand" href="admin.html">' + A.logo('logo-sm') + '<h1><span class="sr-only">Clikeff</span><small>ניהול מנויים</small></h1></a>' +
+      '<a class="admin-brand" href="admin.html">' + A.logo('logo-sm', true) + '<h1><span class="sr-only">Clikeff</span><small>ניהול מנויים</small></h1></a>' +
       '<span class="spacer"></span><div class="actions">' +
       (st.user ? '<span class="m-me" dir="ltr">' + esc(st.user.email || '') + '</span>' +
         '<a class="btn btn-ghost btn-sm" href="admin.html">' + ic('play') + 'למשחק</a>' +

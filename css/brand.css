@@ -158,6 +158,11 @@ h1, h2, h3, h4 { font-weight: 800; }
 .logo-anim .lg-burst.b2 { animation: g-burst 5.5s ease-out .72s infinite both; }
 .logo-anim .lg-sparks { animation: g-sparks 5.5s ease-out .6s infinite both; }
 .logo-anim .lt { animation: g-jump 5.5s cubic-bezier(.34, 1.56, .64, 1) infinite both; animation-delay: calc(1.1s + var(--k) * .06s); }
+/* מסונכרן לשעון (ראו A.logo) */
+.logo-anim .lg-cursor, .logo-anim .lg-dot, .logo-anim .lg-ring.r1, .logo-anim .lg-burst.b1, .logo-anim .lg-sparks { animation-delay: calc(var(--sy, 0s) + .6s); }
+.logo-anim .lg-ring.r2 { animation-delay: calc(var(--sy, 0s) + .66s); }
+.logo-anim .lg-burst.b2 { animation-delay: calc(var(--sy, 0s) + .72s); }
+.logo-anim .lt { animation-delay: calc(var(--sy, 0s) + 1.1s + var(--k) * .06s); }
 @keyframes g-cursor {
   0% { opacity: 0; transform: translate(90px, 70px) rotate(18deg); }
   8% { opacity: 1; transform: none; }
