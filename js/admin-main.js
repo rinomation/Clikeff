@@ -22,7 +22,7 @@
     });
   }
   /* מוזיקה קלילה במסך הפתיחה ובהכנה (לא בזמן ניגון דוגמה) */
-  const homeMusic = () => { if (!S.playing) A.Sound.playMusic('chase'); };
+  const homeMusic = () => { if (!S.playing) A.Sound.playMusic('chase', { quiet: true }); };
   S.showSetup = () => { S.view = 'setup'; M.render('setup', setupData()); homeMusic(); };
   S.showHome = () => { S.view = 'home'; M.render('home', { license: S.license, owner: S.owner, name: S.owner ? null : (S.license && S.license.name) }); homeMusic(); };
   S.showLogin = (d) => { S.view = 'login'; M.user = null; M.render('login', Object.assign({ email: A.store.get('hostEmail', ''), form: true }, d || {})); };

@@ -373,6 +373,7 @@
   const VOL = 0.5;
   let el = null, fileOn = false, filePaused = false, fileTrack = null, fadeT = null;
   const failed = {};
+  let noSynth = false; /* במסך הפתיחה: רק מנגינה אמיתית, בלי מנגינה מחוללת */
   S.TRACK_IDS = Object.keys(FILES);
 
   function ensureEl() {
@@ -384,7 +385,7 @@
       if (!fileTrack || !(fileOn || filePaused)) return;
       failed[fileTrack] = true;
       const t = fileTrack; fileOn = false; filePaused = false;
-      if (ctx) synth.play(SYNTH_OF(t));
+      if (ctx && !noSynth) synth.play(SYNTH_OF(t));
     });
     return true;
   }
@@ -414,14 +415,15 @@
       touchHooked = false;
       document.removeEventListener('pointerdown', go, true); document.removeEventListener('keydown', go, true);
       const want = pendingId; pendingId = null;
-      if (want && !fileOn) { S.unlock(); S.playMusic(want); }
+      if (want && !fileOn) { S.unlock(); S.playMusic(want, { quiet: noSynth }); }
     };
     document.addEventListener('pointerdown', go, true); document.addEventListener('keydown', go, true);
   }
-  S.playMusic = (id) => {
+  S.playMusic = (id, opts) => {
     pendingId = null;
+    noSynth = !!(opts && opts.quiet);
     if (!FILES[id] && !TRACKS[id]) id = 'fun';
-    if (!FILES[id] || failed[id] || !ensureEl()) { if (ctx) synth.play(SYNTH_OF(id)); return; }
+    if (!FILES[id] || failed[id] || !ensureEl()) { if (ctx && !noSynth) synth.play(SYNTH_OF(id)); return; }
     if (fileOn && fileTrack === id) return;
     if (ctx) synth.stop();
     fileTrack = id; fileOn = true; filePaused = false;
@@ -435,7 +437,7 @@
       fileOn = false;
       if (err && err.name === 'NotAllowedError') { waitTouch(id); return; } /* מחכים לנגיעה */
       failed[id] = true;
-      if (ctx) synth.play(SYNTH_OF(id));
+      if (ctx && !noSynth) synth.play(SYNTH_OF(id));
     });
     else fade(target(), 600);
   };
