@@ -38,6 +38,7 @@
   R.enc = enc; R.dec = dec; R.decFields = decFields;
   R.NOW = { __now: true }; /* חותמת זמן של השרת */
   R.inc = (n) => ({ __inc: n }); /* הוספה למספר בשרת */
+  R.append = (list) => ({ __append: list }); /* הוספה לסוף רשימה בשרת */
 
   let ROOT = '', DOCS = '';
   R.init = (projectId) => {
@@ -77,6 +78,7 @@
     Object.keys(data).forEach((k) => {
       if (data[k] === R.NOW) transforms.push({ fieldPath: k, setToServerValue: 'REQUEST_TIME' });
       else if (data[k] && data[k].__inc) transforms.push({ fieldPath: k, increment: { integerValue: String(data[k].__inc) } });
+      else if (data[k] && data[k].__append) transforms.push({ fieldPath: k, appendMissingElements: { values: data[k].__append.map(enc) } });
       else { fields[k] = enc(data[k]); mask.push(k); }
     });
     const w = { update: { name: DOCS + '/' + path, fields } };

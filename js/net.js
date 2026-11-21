@@ -110,7 +110,10 @@
 
   /* ================= מנהל ================= */
   /** עוד משחק של המנחה: מונה ותאריך אחרון (מוצג בדף הניהול) */
-  N.countPlay = () => R.set('licenses/' + uid, { plays: R.inc(1), lastPlay: R.NOW }, { merge: true, mustExist: true });
+  N.countPlay = (players) => R.set('licenses/' + uid, {
+    plays: R.inc(1), lastPlay: R.NOW, lastPlayers: players,
+    games: R.append([{ t: Date.now(), n: players }])
+  }, { merge: true, mustExist: true });
   N.loadHost = () => R.get('hosts/' + uid);
   N.saveHost = (patch) => R.set('hosts/' + uid, patch, { merge: true });
   N.clearBank = () => R.set('hosts/' + uid, { bank: null }, { merge: true });

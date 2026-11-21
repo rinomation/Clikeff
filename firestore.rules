@@ -36,9 +36,12 @@ service cloud.firestore {
         && request.resource.data.pass is string && request.resource.data.pass.size() <= 40)
         // כל משחק שמתחיל: מונה המשחקים עולה ב-1 ונרשם התאריך
         || (signedIn() && me() == id
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plays', 'lastPlay'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plays', 'lastPlay', 'lastPlayers', 'games'])
         && request.resource.data.plays == resource.data.get('plays', 0) + 1
-        && request.resource.data.lastPlay == request.time);
+        && request.resource.data.lastPlay == request.time
+        && request.resource.data.lastPlayers is int && request.resource.data.lastPlayers <= 1000
+        && request.resource.data.games is list && request.resource.data.games.size() <= 2000
+        && request.resource.data.games.size() == resource.data.get('games', []).size() + 1);
     }
 
     // פניות מטופס יצירת הקשר באתר: כל אחד יכול לשלוח, רק המנהלת קוראת
