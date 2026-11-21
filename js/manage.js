@@ -422,6 +422,12 @@
       (l.email ? '<a href="mailto:' + esc(l.email) + '" dir="ltr">' + ic('mail') + esc(l.email) + '</a>' : '') +
       (l.tel ? '<a href="https://wa.me/' + waNum(l.tel) + '" target="_blank" rel="noopener" dir="ltr">' + ic('send') + esc(prettyPhone(l.tel)) + '</a>' : '') +
       '</div></div>' +
+      '<div class="m-note">' +
+      '<div class="m-note-top"><label for="note-' + esc(l.id) + '">' + ic('edit') + 'ההערות שלי</label>' +
+      '<button class="link-btn" type="button" data-action="note-date" data-value="' + esc(l.id) + '">+ תאריך היום</button>' +
+      '<span class="m-note-st" id="note-st-' + esc(l.id) + '">' + (l.noteAt ? 'נשמר ' + esc(when(tms(l.noteAt) || l.noteAt)) : '') + '</span></div>' +
+      '<textarea class="input m-note-text" id="note-' + esc(l.id) + '" data-id="' + esc(l.id) + '" rows="' + Math.min(8, Math.max(2, (l.note || '').split('\n').length + 1)) + '" maxlength="3000" placeholder="למשל: התקשרתי, לא ענתה. שלחתי מחירים במייל. לחזור אליה ביום ראשון.">' + esc(l.note || '') + '</textarea>' +
+      '</div>' +
       '<div class="m-acts">' +
       '<button class="btn btn-primary btn-sm" type="button" data-action="lead-client" data-value="' + esc(l.id) + '">' + ic('sparkle') + 'יצירת מנוי</button>' +
       '<button class="btn btn-ghost btn-sm" type="button" data-action="lead-done" data-value="' + esc(l.id) + '">' + (l.done ? 'החזרה לחדשות' : ic('check') + 'סימון שטופלה') + '</button>' +
@@ -485,6 +491,10 @@
       form.addEventListener('submit', (e) => { e.preventDefault(); doCreate(); });
       ['name', 'email', 'phone'].forEach((k) => { const el = $('#n-' + k); if (el) el.addEventListener('input', () => { st.form[k] = el.value; }); });
     }
+    document.querySelectorAll('.m-note-text').forEach((t) => {
+      t.addEventListener('input', () => { t.rows = Math.min(8, Math.max(2, t.value.split('\n').length + 1)); const s = $('#note-st-' + t.dataset.id); if (s) s.textContent = 'לא נשמר עדיין…'; });
+      t.addEventListener('blur', () => saveNote(t.dataset.id, t.value));
+    });
     const s = $('#m-search');
     if (s) s.addEventListener('input', () => { st.q = s.value; const pos = s.selectionStart; viewDash(); const s2 = $('#m-search'); s2.focus(); s2.setSelectionRange(pos, pos); });
   }
@@ -639,6 +649,18 @@
       viewDash();
     } catch (e) { A.toast(N.errorText(e), { type: 'bad' }); }
   }
+  async function saveNote(id, text) {
+    const l = st.leads.find((x) => x.id === id); if (!l) return;
+    const stEl = $('#note-st-' + id);
+    if ((l.note || '') === text) { if (stEl && /לא נשמר/.test(stEl.textContent)) stEl.textContent = l.noteAt ? 'נשמר' : ''; return; }
+    l.note = text; /* מיד, כדי שציור מחדש לא ימחק את מה שנכתב */
+    if (stEl) stEl.textContent = 'שומרים…';
+    try {
+      if (!DEMO) await R.set('leads/' + id, { note: text, noteAt: R.NOW }, { merge: true });
+      l.noteAt = Date.now();
+      if (stEl) stEl.textContent = 'נשמר ✓';
+    } catch (e) { if (stEl) stEl.textContent = 'לא נשמר'; A.toast(N.errorText(e), { type: 'bad' }); }
+  }
   const find = (id) => st.list.find((x) => x.id === id);
   async function renew(id) {
     const l = find(id); if (!l) return;
@@ -693,6 +715,14 @@
         return;
       }
       case 'lead-filter': st.leadFilter = v; return viewDash();
+      case 'note-date': {
+        const t = $('#note-' + v); if (!t) return;
+        const d = new Date(), stamp = d.getDate() + '.' + (d.getMonth() + 1) + ': ';
+        t.value = t.value ? t.value.replace(/\s+$/, '') + '\n' + stamp : stamp;
+        t.rows = Math.min(8, Math.max(2, t.value.split('\n').length + 1));
+        t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+        return;
+      }
       case 'lead-client': {
         const l = st.leads.find((x) => x.id === v); if (!l) return;
         st.last = null; st.form = { name: l.name, email: l.email, phone: l.tel, months: 12 };

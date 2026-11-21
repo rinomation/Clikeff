@@ -181,3 +181,14 @@
 .m-games li b { font-family: 'Fredoka', sans-serif; font-size: 1.1rem; color: var(--cyan); }
 .m-games li small { color: var(--text-mute); }
 .m-stats .kids b { color: #14c49a; }
+
+/* הערות על פנייה */
+.m-note { display: grid; gap: 6px; padding-inline-start: 58px; }
+.m-note-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.m-note-top label { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: .9rem; color: #ffb020; }
+.m-note-top .mi svg { width: 15px; height: 15px; }
+.m-note-top .link-btn { font-size: .85rem; }
+.m-note-st { margin-inline-start: auto; font-size: .8rem; color: var(--text-mute); }
+.m-note-text { width: 100%; resize: vertical; min-height: 0; font: inherit; font-size: .95rem; line-height: 1.6; padding: 10px 12px; background: rgba(255, 176, 32, .06); border-color: rgba(255, 176, 32, .25); }
+.m-note-text:focus { border-color: #ffb020; }
+@media (max-width: 700px) { .m-note { padding-inline-start: 0; } }
