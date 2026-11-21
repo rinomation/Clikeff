@@ -13,6 +13,16 @@
   const fmtT = (ms) => { const d = new Date(ms); return fmt(ms) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
   const isTrial = (l) => !!l.trial && l.active !== false && expMs(l) > Date.now();
   const untilOf = (l) => (l.trial ? fmtT(expMs(l)) : fmt(expMs(l)));
+  const playsOf = (l) => l.plays || 0;
+  /** "היום 14:05" / "אתמול" / "3.11" */
+  const ago = (ms) => {
+    if (!ms) return '';
+    const d = new Date(ms), t = new Date(), y = new Date(Date.now() - 864e5);
+    const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    if (d.toDateString() === t.toDateString()) return 'היום ' + hm;
+    if (d.toDateString() === y.toDateString()) return 'אתמול ' + hm;
+    return d.getDate() + '.' + (d.getMonth() + 1) + (d.getFullYear() !== t.getFullYear() ? '.' + d.getFullYear() : '');
+  };
   const daysLeft = (ms) => Math.ceil((ms - Date.now()) / 864e5);
   const tms = (t) => (t && t.toMillis ? t.toMillis() : 0);
   const expMs = (l) => tms(l.expires);
@@ -345,6 +355,7 @@
       '<button class="m-row-head" type="button" data-action="open" data-value="' + esc(l.id) + '" aria-expanded="' + open + '">' +
       '<span class="m-av" style="--c:' + colorOf(l.name || l.email) + '">' + esc(initial(l)) + '</span>' +
       '<span class="m-who"><b>' + esc(l.name || 'בלי שם') + '</b><small dir="ltr">' + esc(l.email || '') + '</small></span>' +
+      '<span class="m-plays' + (playsOf(l) ? '' : ' is-zero') + '" title="משחקים שנפתחו"><b>' + playsOf(l) + '</b><small>' + (playsOf(l) ? 'משחקים · ' + ago(tms(l.lastPlay)) : 'עוד לא שיחקו') + '</small></span>' +
       '<span class="m-when"><span class="m-badge ' + s.k + '">' + s.t + '</span><small>עד ' + untilOf(l) + '</small></span>' +
       '<span class="m-chev">' + A.icon('next') + '</span>' +
       '</button>' +
@@ -363,6 +374,7 @@
                 '<button class="link-btn" type="button" data-action="show-pass" data-value="' + esc(l.id) + '">' + (st.shown[l.id] ? 'הסתרה' : 'הצגה') + '</button>' +
                 (st.shown[l.id] ? '<button class="link-btn" type="button" data-action="copy-pass" data-value="' + esc(l.id) + '">העתקה</button>' : '')
               : '<span class="m-muted">לא שמורה</span>') + '</dd></div>' +
+            '<div><dt>משחקים</dt><dd>' + (playsOf(l) ? '<b>' + playsOf(l) + '</b> · האחרון ' + fmtT(tms(l.lastPlay)) : 'עוד לא שיחקו') + '</dd></div>' +
             '<div><dt>נפתח ב-</dt><dd>' + fmt(tms(l.createdAt)) + '</dd></div>' +
             '<div><dt>בתוקף עד</dt><dd>' + untilOf(l) + '</dd></div>' +
             '<div><dt>מצב</dt><dd><span class="m-badge ' + s.k + '">' + s.t + '</span></dd></div>' +
@@ -449,6 +461,7 @@
       '<div><b>' + c.all + '</b><span>לקוחות</span></div>' +
       '<div class="ok"><b>' + (c.ok + c.soon) + '</b><span>פעילים</span></div>' +
       '<div class="soon"><b>' + c.soon + '</b><span>מסתיימים החודש</span></div>' +
+      '<div class="play"><b>' + st.list.reduce((n, l) => n + playsOf(l), 0) + '</b><span>משחקים בסך הכול</span></div>' +
       '<div class="new"><b>' + nNew + '</b><span>פניות חדשות</span></div>' +
       '</div></div>' +
       '<div class="m-tabs" role="tablist">' +
@@ -480,8 +493,22 @@
     const ok = await loadList();
     if (ok === 'denied') return viewSetup();
     viewDash();
+    startLive();
   }
 
+  let liveT = null;
+  function startLive() {
+    if (liveT || DEMO) return;
+    const tick = async () => {
+      if (document.hidden || !st.user || !$('.manage')) return;
+      const ae = document.activeElement;
+      if (st.edit || st.mail || (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName))) return;
+      const y = window.scrollY;
+      if (await loadList() === true && !st.edit && !st.mail) { viewDash(); window.scrollTo(0, y); }
+    };
+    liveT = setInterval(tick, 30000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  }
   async function loadList() {
     if (DEMO) return true;
     try { st.leads = await R.list('leads'); st.leadsDenied = false; }
@@ -702,8 +729,8 @@
     const T = (d) => ({ toMillis: () => Date.now() + d * 864e5 });
     st.user = { email: N.OWNER, uid: 'demo' };
     st.list = [
-      { id: 'a', name: 'תורת בנימין', email: 'yedidhashem@gmail.com', phone: '0504293936', pass: 'Kfmr-4827', active: true, expires: T(364), createdAt: T(-1) },
-      { id: 'b', name: 'בית יעקב רמות', email: 'office@by-ramot.co.il', phone: '0527712345', pass: 'Hwnt-5392', active: true, expires: T(21), createdAt: T(-344) },
+      { id: 'a', name: 'תורת בנימין', email: 'yedidhashem@gmail.com', phone: '0504293936', pass: 'Kfmr-4827', active: true, expires: T(364), createdAt: T(-1), plays: 3, lastPlay: T(0) },
+      { id: 'b', name: 'בית יעקב רמות', email: 'office@by-ramot.co.il', phone: '0527712345', pass: 'Hwnt-5392', active: true, expires: T(21), createdAt: T(-344), plays: 47, lastPlay: T(-1) },
       { id: 'c', name: 'תלמוד תורה נועם', email: 'noam.tt@gmail.com', pass: 'Pqzd-2266', active: true, expires: T(-6), createdAt: T(-371) },
       { id: 'd', name: 'קייטנת שמחה', email: 'simcha.camp@gmail.com', phone: '0548800112', pass: 'Rtbe-7734', active: false, expires: T(120), createdAt: T(-60) },
       { id: 'e', name: 'ישיבת אור התורה', email: 'or.hatorah@gmail.com', phone: '0533344556', pass: 'Mxkc-3958', active: true, expires: T(230), createdAt: T(-135) }

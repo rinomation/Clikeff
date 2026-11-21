@@ -286,6 +286,7 @@
     if (counting) return;
     /* הילדים יעברו לבדיקה מהירה, כדי לקבל את השאלה הראשונה מיד */
     if (S.code) A.Net.updateRoom(S.code, { startingAt: A.FsRest.NOW }).catch(() => {});
+    if (!S.owner) A.Net.countPlay().catch(() => {}); /* סופרים משחקים לדף הניהול */
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return go();
     counting = true;
     const ov = document.createElement('div');

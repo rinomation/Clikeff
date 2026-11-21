@@ -37,6 +37,7 @@
   }
   R.enc = enc; R.dec = dec; R.decFields = decFields;
   R.NOW = { __now: true }; /* חותמת זמן של השרת */
+  R.inc = (n) => ({ __inc: n }); /* הוספה למספר בשרת */
 
   let ROOT = '', DOCS = '';
   R.init = (projectId) => {
@@ -75,6 +76,7 @@
     const fields = {}, transforms = [], mask = [];
     Object.keys(data).forEach((k) => {
       if (data[k] === R.NOW) transforms.push({ fieldPath: k, setToServerValue: 'REQUEST_TIME' });
+      else if (data[k] && data[k].__inc) transforms.push({ fieldPath: k, increment: { integerValue: String(data[k].__inc) } });
       else { fields[k] = enc(data[k]); mask.push(k); }
     });
     const w = { update: { name: DOCS + '/' + path, fields } };

@@ -33,7 +33,12 @@ service cloud.firestore {
       allow create, delete: if isOwner();
       allow update: if isOwner() || (signedIn() && me() == id
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pass', 'passAt'])
-        && request.resource.data.pass is string && request.resource.data.pass.size() <= 40);
+        && request.resource.data.pass is string && request.resource.data.pass.size() <= 40)
+        // כל משחק שמתחיל: מונה המשחקים עולה ב-1 ונרשם התאריך
+        || (signedIn() && me() == id
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plays', 'lastPlay'])
+        && request.resource.data.plays == resource.data.get('plays', 0) + 1
+        && request.resource.data.lastPlay == request.time);
     }
 
     // פניות מטופס יצירת הקשר באתר: כל אחד יכול לשלוח, רק המנהלת קוראת
